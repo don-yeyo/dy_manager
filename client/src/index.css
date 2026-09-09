@@ -61,9 +61,9 @@
   --drawer-title: #94a3b8;
   --drawer-footer: #94a3b8;
 
-  /* Avatar tokens para dark mode: azul vibrante y rojo vivo para contraste nítido con texto blanco */
+  /* Avatar tokens para dark mode: mismo azul corporativo de modo claro (#0d2c5c) y texto blanco */
   --avatar-admin-bg: #e40521;
-  --avatar-user-bg: #2563eb;
+  --avatar-user-bg: #0d2c5c;
   --avatar-text: #ffffff;
 }
 

@@ -237,50 +237,24 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Header del Dashboard en Desktop (en mobile se oculta por clase CSS dashboard-header-desktop) */}
-        <div className="dashboard-header-desktop" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }}>
-                Tablero de <span style={{ color: 'var(--secondary)' }}>Aplicaciones</span>
-              </h1>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Hola, <strong>{user?.nombre}</strong>. Aquí tienes tus herramientas corporativas autorizadas.
-              </p>
-            </div>
+        {/* Header del Dashboard en Desktop (saludo e interruptor de admin) */}
+        <div className="dashboard-header-desktop" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
+          <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)' }}>
+            Hola, <strong>{user?.nombre}</strong>. Aquí tienes tus herramientas corporativas autorizadas.
+          </p>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {isAdmin() && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Button
-                variant="outline"
+                variant={showAllAsAdmin ? 'secondary' : 'outline'}
                 size="sm"
-                icon={SlidersHorizontal}
-                onClick={openCustomizeModal}
+                icon={Shield}
+                onClick={() => setShowAllAsAdmin(prev => !prev)}
               >
-                Personalizar Tablero
-              </Button>
-
-              {isAdmin() && (
-                <Button
-                  variant={showAllAsAdmin ? 'secondary' : 'outline'}
-                  size="sm"
-                  icon={Shield}
-                  onClick={() => setShowAllAsAdmin(prev => !prev)}
-                >
-                  {showAllAsAdmin ? 'Todas las Apps (Admin)' : 'Mis Asignaciones'}
-                </Button>
-              )}
-
-              <Button
-                variant="outline"
-                size="sm"
-                icon={RefreshCw}
-                onClick={() => fetchDashboardData(showAllAsAdmin)}
-                loading={loading}
-              >
-                Actualizar
+                {showAllAsAdmin ? 'Todas las Apps (Admin)' : 'Mis Asignaciones'}
               </Button>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Estados: Loading o Error */}

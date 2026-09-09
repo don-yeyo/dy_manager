@@ -104,7 +104,7 @@ export const AppCard = ({ app, onRequestAccess }) => {
                 <span className="badge badge-success" style={{ fontSize: '0.65rem' }}>
                   Pública
                 </span>
-              ) : app.origen_asignacion ? (
+              ) : app.origen_asignacion && app.origen_asignacion !== 'Directa' ? (
                 <span
                   style={{
                     fontSize: '0.65rem',
@@ -112,7 +112,7 @@ export const AppCard = ({ app, onRequestAccess }) => {
                     fontWeight: 600
                   }}
                 >
-                  {app.origen_asignacion}
+                  {app.origen_asignacion === 'Directa y Grupo' ? 'Grupo' : app.origen_asignacion}
                 </span>
               ) : null}
             </div>
@@ -122,36 +122,9 @@ export const AppCard = ({ app, onRequestAccess }) => {
           <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text)', marginBottom: '8px', lineHeight: 1.3 }}>
             {app.nombre}
           </h4>
-          <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: 1.45, minHeight: '38px', marginBottom: '16px' }}>
+          <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: 1.45, minHeight: '38px', marginBottom: '20px' }}>
             {app.descripcion || 'Sin descripción disponible.'}
           </p>
-
-          {/* Info técnica del enlace */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '0.72rem',
-              color: 'var(--text-muted)',
-              marginBottom: '18px',
-              padding: '6px 10px',
-              background: 'var(--surface-hover)',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
-            title={app.url}
-          >
-            <Wifi size={13} color={urlInfo.isHttps ? 'var(--success)' : 'var(--warning)'} />
-            <span style={{ fontWeight: 600, color: urlInfo.isHttps ? 'var(--success)' : 'var(--warning)' }}>
-              {urlInfo.isHttps ? 'HTTPS' : 'HTTP'}
-            </span>
-            <span>•</span>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{urlInfo.host}</span>
-            {urlInfo.hasPort && <span style={{ opacity: 0.7 }}>:{new URL(app.url).port}</span>}
-          </div>
         </div>
 
         {/* Botón de Lanzamiento / Solicitar Acceso */}
@@ -159,6 +132,7 @@ export const AppCard = ({ app, onRequestAccess }) => {
           <button
             onClick={handleLaunch}
             disabled={opening}
+            title={app.url}
             style={{
               width: '100%',
               display: 'flex',
@@ -179,11 +153,12 @@ export const AppCard = ({ app, onRequestAccess }) => {
             }}
           >
             <ExternalLink size={16} />
-            <span>{opening ? 'Abriendo...' : 'Acceder al Sistema'}</span>
+            <span>{opening ? 'Abriendo...' : 'Acceder'}</span>
           </button>
         ) : (
           <button
             onClick={() => onRequestAccess && onRequestAccess(app)}
+            title={app.url}
             style={{
               width: '100%',
               display: 'flex',
@@ -211,6 +186,7 @@ export const AppCard = ({ app, onRequestAccess }) => {
       <div
         className="app-button-mobile animate-fade-in"
         onClick={handleLaunch}
+        title={app.url}
         style={{
           display: 'none', // Controlado por media query en CSS
           flexDirection: 'column',
