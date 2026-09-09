@@ -39,10 +39,3 @@ lerna-debug.log*
 .DS_Store
 Thumbs.db
 
-# Subdirectorios antiguos o temporales no versionables
-dy-cot-service/
-dy-gateway/
-dy-manager-client/
-dy-manager-infra/
-dy_don_yeyo_mannager/
-
