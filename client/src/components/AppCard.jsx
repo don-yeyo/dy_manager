@@ -7,7 +7,23 @@ export const AppCard = ({ app, onRequestAccess }) => {
   const [opening, setOpening] = useState(false);
 
   // Determinar si puede acceder o sólo ver
+  // Determinar si puede acceder o sólo ver
   const canAccess = app.puede_acceder !== false && app.puede_acceder !== 0;
+
+  // Normalizar color de la app para asegurar contenedor estilizado
+  const getAppColor = () => {
+    let c = app.color;
+    if (!c || typeof c !== 'string') return '#0d2c5c';
+    c = c.trim();
+    if (c.startsWith('#')) {
+      if (c.length === 4) {
+        return `#${c[1]}${c[1]}${c[2]}${c[2]}${c[3]}${c[3]}`;
+      }
+      return c.slice(0, 7);
+    }
+    return '#0d2c5c';
+  };
+  const appColor = getAppColor();
 
   // Renderizado del Icono
   const renderIcon = (size = 24, imgSize = '28px') => {
@@ -27,7 +43,7 @@ export const AppCard = ({ app, onRequestAccess }) => {
     }
 
     return (
-      <span style={{ fontWeight: 800, fontSize: size > 24 ? '1.4rem' : '1.1rem', color: app.color || 'var(--primary)' }}>
+      <span style={{ fontWeight: 800, fontSize: size > 24 ? '1.4rem' : '1.1rem', color: appColor }}>
         {app.nombre ? app.nombre[0].toUpperCase() : 'DY'}
       </span>
     );
@@ -73,23 +89,26 @@ export const AppCard = ({ app, onRequestAccess }) => {
           justifyContent: 'space-between',
           position: 'relative',
           overflow: 'hidden',
-          borderTop: `4px solid ${app.color || 'var(--primary)'}`
+          borderTop: `4px solid ${appColor}`
         }}
       >
         <div>
           {/* Header de la Card */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '14px' }}>
+            {/* Contenedor del Icono con marco y fondo en el color de la app */}
             <div
               style={{
                 width: '48px',
                 height: '48px',
                 borderRadius: '14px',
-                background: `linear-gradient(135deg, ${app.color || '#0d2c5c'}15 0%, ${app.color || '#0d2c5c'}30 100%)`,
-                border: `1px solid ${app.color || '#0d2c5c'}40`,
+                background: `linear-gradient(135deg, ${appColor}18 0%, ${appColor}32 100%)`,
+                border: `2px solid ${appColor}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: app.color || 'var(--primary)'
+                color: appColor,
+                boxShadow: `0 3px 8px ${appColor}22`,
+                flexShrink: 0
               }}
             >
               {renderIcon(24, '28px')}
@@ -100,11 +119,7 @@ export const AppCard = ({ app, onRequestAccess }) => {
                 <Tag size={11} />
                 {app.categoria || 'General'}
               </span>
-              {app.requiere_seguridad === 0 ? (
-                <span className="badge badge-success" style={{ fontSize: '0.65rem' }}>
-                  Pública
-                </span>
-              ) : app.origen_asignacion && app.origen_asignacion !== 'Directa' ? (
+              {app.origen_asignacion && app.origen_asignacion !== 'Directa' && app.origen_asignacion !== 'Pública' ? (
                 <span
                   style={{
                     fontSize: '0.65rem',
@@ -226,23 +241,24 @@ export const AppCard = ({ app, onRequestAccess }) => {
           </div>
         )}
 
-        {/* Icono Redondeado estilo Smartphone App Icon */}
+        {/* Icono Redondeado estilo Smartphone App Icon con marco del color de la app */}
         <div
           style={{
             width: '56px',
             height: '56px',
             borderRadius: '16px',
-            background: `linear-gradient(135deg, ${app.color || '#0d2c5c'}20 0%, ${app.color || '#0d2c5c'}35 100%)`,
-            border: `1px solid ${app.color || '#0d2c5c'}45`,
+            background: `linear-gradient(135deg, ${appColor}22 0%, ${appColor}40 100%)`,
+            border: `2px solid ${appColor}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: app.color || 'var(--primary)',
+            color: appColor,
             marginBottom: '10px',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.06)'
+            boxShadow: `0 4px 12px ${appColor}30`,
+            flexShrink: 0
           }}
         >
-          {renderIcon(28, '34px')}
+          {renderIcon(28, '32px')}
         </div>
 
         {/* Nombre de la aplicación */}

@@ -237,25 +237,19 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Header del Dashboard en Desktop (saludo e interruptor de admin) */}
-        <div className="dashboard-header-desktop" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
-          <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)' }}>
-            Hola, <strong>{user?.nombre}</strong>. Aquí tienes tus herramientas corporativas autorizadas.
-          </p>
-
-          {isAdmin() && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Button
-                variant={showAllAsAdmin ? 'secondary' : 'outline'}
-                size="sm"
-                icon={Shield}
-                onClick={() => setShowAllAsAdmin(prev => !prev)}
-              >
-                {showAllAsAdmin ? 'Todas las Apps (Admin)' : 'Mis Asignaciones'}
-              </Button>
-            </div>
-          )}
-        </div>
+        {/* Interruptor de vista para Administrador en Desktop */}
+        {isAdmin() && (
+          <div className="dashboard-header-desktop" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '16px' }}>
+            <Button
+              variant={showAllAsAdmin ? 'secondary' : 'outline'}
+              size="sm"
+              icon={Shield}
+              onClick={() => setShowAllAsAdmin(prev => !prev)}
+            >
+              {showAllAsAdmin ? 'Todas las Apps (Admin)' : 'Mis Asignaciones'}
+            </Button>
+          </div>
+        )}
 
         {/* Estados: Loading o Error */}
         {loading ? (
