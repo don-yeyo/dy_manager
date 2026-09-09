@@ -4,7 +4,7 @@ import { useAuth } from '../config/AuthContext';
 import { useTheme } from '../config/ThemeContext';
 import logo from '../assets/logo-don-yeyo-png-sin-fondo.png';
 
-export const Header = ({ onToggleDrawer }) => {
+export const Header = ({ onToggleDrawer, search, onSearchChange, showSearchInHeader = false }) => {
   const { user, logout, isAdmin } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -27,6 +27,8 @@ export const Header = ({ onToggleDrawer }) => {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0';
+
   return (
     <header
       className="glass"
@@ -34,41 +36,47 @@ export const Header = ({ onToggleDrawer }) => {
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        height: '68px',
+        minHeight: '60px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 24px',
-        borderBottom: '1px solid var(--border)'
+        padding: '8px 16px',
+        borderBottom: '1px solid var(--border)',
+        gap: '12px'
       }}
     >
-      {/* Lado Izquierdo: Botón Menú + Marca */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <button
-          onClick={onToggleDrawer}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--text)',
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: 'var(--radius)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          title="Abrir menú"
-        >
-          <Menu size={22} />
-        </button>
+      {/* Lado Izquierdo: Botón Menú (Solo si es Admin) + Marca */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {isAdmin() && (
+          <button
+            onClick={onToggleDrawer}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text)',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: 'var(--radius)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title="Abrir menú de administración"
+          >
+            <Menu size={22} />
+          </button>
+        )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img
             src={logo}
             alt="Don Yeyo"
-            style={{ height: '36px', objectFit: 'contain' }}
+            className="header-logo"
+            style={{ objectFit: 'contain' }}
           />
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+
+          {/* Título en Desktop */}
+          <div className="header-title-desktop" style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--header-text)', letterSpacing: '-0.02em' }}>
                 DON YEYO <span style={{ color: 'var(--secondary)' }}>MANAGER</span>
@@ -83,15 +91,46 @@ export const Header = ({ onToggleDrawer }) => {
                   color: 'var(--text-muted)'
                 }}
               >
-                v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}
+                v{appVersion}
               </span>
             </div>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500 }}>
               Portal Centralizado de Sistemas
             </span>
           </div>
+
+          {/* Título en Mobile: DYM con la M roja y versión sutil */}
+          <div className="header-title-mobile" style={{ alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontWeight: 850, fontSize: '1.2rem', color: 'var(--header-text)', letterSpacing: '-0.03em' }}>
+              DY<span style={{ color: 'var(--secondary)' }}>M</span>
+            </span>
+            <span
+              style={{
+                fontSize: '0.65rem',
+                fontWeight: 600,
+                color: 'var(--text-muted)',
+                opacity: 0.85
+              }}
+              title={`Versión del aplicativo: v${appVersion}`}
+            >
+              v{appVersion}
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* Centro: Buscador integrado en Header (visible especialmente en mobile si está activo) */}
+      {showSearchInHeader && (
+        <div className="header-search-container" style={{ flex: 1, maxWidth: '420px', margin: '0 8px' }}>
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="header-search-input"
+          />
+        </div>
+      )}
 
       {/* Lado Derecho: Toggle de Tema + Avatar Usuario */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

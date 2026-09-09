@@ -12,7 +12,7 @@ import { DbConnectionGuard } from './components/DbConnectionGuard';
 import { RefreshCw } from 'lucide-react';
 
 // Guard de Autenticación
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, withLayout = true }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -25,6 +25,10 @@ const ProtectedRoute = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!withLayout) {
+    return children;
   }
 
   return <Layout>{children}</Layout>;
@@ -68,7 +72,7 @@ export default function App() {
         <Route
           path="/"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute withLayout={false}>
               <Dashboard />
             </ProtectedRoute>
           }

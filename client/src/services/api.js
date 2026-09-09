@@ -63,7 +63,8 @@ export const AppsService = {
   update: (id, data) => api.put(`/apps/${id}`, data),
   delete: (id) => api.delete(`/apps/${id}`),
   getAssignments: (id) => api.get(`/apps/${id}/assignments`),
-  saveAssignments: (id, data) => api.post(`/apps/${id}/assignments`, data)
+  saveAssignments: (id, data) => api.post(`/apps/${id}/assignments`, data),
+  requestAccess: (id, mensaje) => api.post(`/apps/${id}/request-access`, { mensaje })
 };
 
 export const UsersService = {

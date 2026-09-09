@@ -63,6 +63,18 @@ Portal y Hub centralizado para nuclear el acceso a todas las herramientas y sist
     - Captura inmediatamente cualquier error 500 o fallo de red en peticiones Axios mediante un CustomEvent global (`api-request-failed`), verificando al instante el estado de la BD.
     - Despliega un Modal crítico no cerrable con aviso visual y botón de reintento ("Reintentar Conexión"). Al restablecer la comunicación, recarga la aplicación automáticamente para evitar inconsistencias de estado.
 
+11. **Vista Mobile Optimizada (Botonera Smartphone & DYM):**
+    - En dispositivos móviles, la barra superior se compacta mostrando el isotipo y las siglas **DY<span style="color:#e40521">M</span>** (con la M roja) junto a la versión sutil del aplicativo.
+    - El buscador de aplicaciones se ubica dinámicamente en el Navbar para ahorrar espacio vertical.
+    - El titular *"Tablero de Aplicaciones"* se remueve en mobile y si el usuario cuenta con un solo agrupamiento, se oculta el título redundante.
+    - Las tarjetas de acceso se transforman en una **botonera compacta táctil estilo smartphone** (apps con icono grande y nombre a dos líneas).
+    - Para los usuarios regulares (`rol: 'user'`), se desactiva el Drawer menú lateral, ofreciendo una experiencia enfocada y minimalista.
+
+12. **Aplicaciones Públicas, Permisos Diferenciados y Solicitud por Email:**
+    - **No requiere seguridad:** Las aplicaciones marcadas como públicas (`requiere_seguridad = 0`) están disponibles automáticamente para todos los colaboradores de la empresa sin requerir asignación explícita.
+    - **Tipos de Permiso:** Cada asignación a usuario o grupo define si la persona **"Puede acceder"** (ingreso directo) o **"Sólo puede ver"**.
+    - **Solicitud de Acceso por Email (SMTP):** Al pulsar sobre una aplicación en modo *Sólo ver*, se abre un modal de solicitud que remite un correo corporativo formateado (idéntico al motor SMTP de `dy_firma_remitos`) a los administradores definidos en `EMAIL_DESTINATARIOS_SOLICITUDES`.
+
 ---
 
 ## 🏛️ Arquitectura y Despliegue en Netlify

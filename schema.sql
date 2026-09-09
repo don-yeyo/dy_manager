@@ -62,10 +62,12 @@ CREATE TABLE IF NOT EXISTS `aplicaciones` (
   `color` VARCHAR(25) NOT NULL DEFAULT '#0d2c5c',
   `orden` INT NOT NULL DEFAULT 0,
   `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  `requiere_seguridad` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_apps_activo` (`activo`),
-  INDEX `idx_apps_categoria` (`categoria`)
+  INDEX `idx_apps_categoria` (`categoria`),
+  INDEX `idx_apps_seguridad` (`requiere_seguridad`)
 ) ENGINE=InnoDB;
 
 -- ------------------------------------------------------------------------
@@ -77,6 +79,7 @@ CREATE TABLE IF NOT EXISTS `asignaciones_usuarios` (
   `usuario_id` INT NOT NULL,
   `aplicacion_id` INT NOT NULL,
   `asignado_por` VARCHAR(150) NULL,
+  `tipo_permiso` ENUM('acceso', 'solo_ver') NOT NULL DEFAULT 'acceso',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `uk_usuario_app` (`usuario_id`, `aplicacion_id`),
   CONSTRAINT `fk_au_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE,
@@ -92,6 +95,7 @@ CREATE TABLE IF NOT EXISTS `asignaciones_grupos` (
   `grupo_id` INT NOT NULL,
   `aplicacion_id` INT NOT NULL,
   `asignado_por` VARCHAR(150) NULL,
+  `tipo_permiso` ENUM('acceso', 'solo_ver') NOT NULL DEFAULT 'acceso',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `uk_grupo_app` (`grupo_id`, `aplicacion_id`),
   CONSTRAINT `fk_ag_grupo` FOREIGN KEY (`grupo_id`) REFERENCES `grupos` (`id`) ON DELETE CASCADE,
@@ -309,7 +313,7 @@ BEGIN
     'INSERT',
     NEW.id,
     NULL,
-    JSON_OBJECT('id', NEW.id, 'nombre', NEW.nombre, 'url', NEW.url, 'icono', NEW.icono, 'categoria', NEW.categoria, 'activo', NEW.activo),
+    JSON_OBJECT('id', NEW.id, 'nombre', NEW.nombre, 'url', NEW.url, 'icono', NEW.icono, 'categoria', NEW.categoria, 'activo', NEW.activo, 'requiere_seguridad', NEW.requiere_seguridad),
     COALESCE(@app_current_user, CURRENT_USER())
   );
 END$$
@@ -324,8 +328,8 @@ BEGIN
     'aplicaciones',
     'UPDATE',
     NEW.id,
-    JSON_OBJECT('id', OLD.id, 'nombre', OLD.nombre, 'url', OLD.url, 'icono', OLD.icono, 'categoria', OLD.categoria, 'activo', OLD.activo),
-    JSON_OBJECT('id', NEW.id, 'nombre', NEW.nombre, 'url', NEW.url, 'icono', NEW.icono, 'categoria', NEW.categoria, 'activo', NEW.activo),
+    JSON_OBJECT('id', OLD.id, 'nombre', OLD.nombre, 'url', OLD.url, 'icono', OLD.icono, 'categoria', OLD.categoria, 'activo', OLD.activo, 'requiere_seguridad', OLD.requiere_seguridad),
+    JSON_OBJECT('id', NEW.id, 'nombre', NEW.nombre, 'url', NEW.url, 'icono', NEW.icono, 'categoria', NEW.categoria, 'activo', NEW.activo, 'requiere_seguridad', NEW.requiere_seguridad),
     COALESCE(@app_current_user, CURRENT_USER())
   );
 END$$
@@ -340,7 +344,7 @@ BEGIN
     'aplicaciones',
     'DELETE',
     OLD.id,
-    JSON_OBJECT('id', OLD.id, 'nombre', OLD.nombre, 'url', OLD.url, 'icono', OLD.icono, 'categoria', OLD.categoria, 'activo', OLD.activo),
+    JSON_OBJECT('id', OLD.id, 'nombre', OLD.nombre, 'url', OLD.url, 'icono', OLD.icono, 'categoria', OLD.categoria, 'activo', OLD.activo, 'requiere_seguridad', OLD.requiere_seguridad),
     NULL,
     COALESCE(@app_current_user, CURRENT_USER())
   );
@@ -360,7 +364,7 @@ BEGIN
     'INSERT',
     NEW.id,
     NULL,
-    JSON_OBJECT('id', NEW.id, 'usuario_id', NEW.usuario_id, 'aplicacion_id', NEW.aplicacion_id, 'asignado_por', NEW.asignado_por),
+    JSON_OBJECT('id', NEW.id, 'usuario_id', NEW.usuario_id, 'aplicacion_id', NEW.aplicacion_id, 'asignado_por', NEW.asignado_por, 'tipo_permiso', NEW.tipo_permiso),
     COALESCE(@app_current_user, CURRENT_USER())
   );
 END$$
@@ -375,7 +379,7 @@ BEGIN
     'asignaciones_usuarios',
     'DELETE',
     OLD.id,
-    JSON_OBJECT('id', OLD.id, 'usuario_id', OLD.usuario_id, 'aplicacion_id', OLD.aplicacion_id, 'asignado_por', OLD.asignado_por),
+    JSON_OBJECT('id', OLD.id, 'usuario_id', OLD.usuario_id, 'aplicacion_id', OLD.aplicacion_id, 'asignado_por', OLD.asignado_por, 'tipo_permiso', OLD.tipo_permiso),
     NULL,
     COALESCE(@app_current_user, CURRENT_USER())
   );
@@ -395,7 +399,7 @@ BEGIN
     'INSERT',
     NEW.id,
     NULL,
-    JSON_OBJECT('id', NEW.id, 'grupo_id', NEW.grupo_id, 'aplicacion_id', NEW.aplicacion_id, 'asignado_por', NEW.asignado_por),
+    JSON_OBJECT('id', NEW.id, 'grupo_id', NEW.grupo_id, 'aplicacion_id', NEW.aplicacion_id, 'asignado_por', NEW.asignado_por, 'tipo_permiso', NEW.tipo_permiso),
     COALESCE(@app_current_user, CURRENT_USER())
   );
 END$$
@@ -410,7 +414,7 @@ BEGIN
     'asignaciones_grupos',
     'DELETE',
     OLD.id,
-    JSON_OBJECT('id', OLD.id, 'grupo_id', OLD.grupo_id, 'aplicacion_id', OLD.aplicacion_id, 'asignado_por', OLD.asignado_por),
+    JSON_OBJECT('id', OLD.id, 'grupo_id', OLD.grupo_id, 'aplicacion_id', OLD.aplicacion_id, 'asignado_por', OLD.asignado_por, 'tipo_permiso', OLD.tipo_permiso),
     NULL,
     COALESCE(@app_current_user, CURRENT_USER())
   );

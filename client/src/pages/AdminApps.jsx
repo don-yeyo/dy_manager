@@ -60,8 +60,8 @@ export const AdminApps = () => {
   const [selectedAppForAssign, setSelectedAppForAssign] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
-  const [assignedUserIds, setAssignedUserIds] = useState([]);
-  const [assignedGroupIds, setAssignedGroupIds] = useState([]);
+  const [assignedUsersMap, setAssignedUsersMap] = useState({}); // { [userId]: 'acceso' | 'solo_ver' }
+  const [assignedGroupsMap, setAssignedGroupsMap] = useState({}); // { [groupId]: 'acceso' | 'solo_ver' }
   const [loadingAssignments, setLoadingAssignments] = useState(false);
 
   const fetchApps = async () => {
@@ -91,7 +91,8 @@ export const AdminApps = () => {
       categoria: 'General',
       color: '#0d2c5c',
       orden: apps.length + 1,
-      activo: 1
+      activo: 1,
+      requiere_seguridad: 1
     });
     setFormError(null);
     setIsAppModalOpen(true);
@@ -116,7 +117,8 @@ export const AdminApps = () => {
       categoria: app.categoria || 'General',
       color: app.color || '#0d2c5c',
       orden: app.orden || 0,
-      activo: app.activo ? 1 : 0
+      activo: app.activo ? 1 : 0,
+      requiere_seguridad: app.requiere_seguridad !== undefined ? (app.requiere_seguridad ? 1 : 0) : 1
     });
     setFormError(null);
     setIsAppModalOpen(true);
@@ -226,8 +228,18 @@ export const AdminApps = () => {
 
       setAllUsers(usersRes.data.users || []);
       setAllGroups(groupsRes.data.groups || []);
-      setAssignedUserIds((assignRes.data.users || []).map(u => u.id));
-      setAssignedGroupIds((assignRes.data.groups || []).map(g => g.id));
+
+      const uMap = {};
+      (assignRes.data.users || []).forEach(u => {
+        uMap[u.id] = u.tipo_permiso || 'acceso';
+      });
+      setAssignedUsersMap(uMap);
+
+      const gMap = {};
+      (assignRes.data.groups || []).forEach(g => {
+        gMap[g.id] = g.tipo_permiso || 'acceso';
+      });
+      setAssignedGroupsMap(gMap);
     } catch (err) {
       console.error(err);
       alert('Error al cargar datos de asignación');
@@ -239,9 +251,18 @@ export const AdminApps = () => {
   const handleSaveAssignments = async () => {
     try {
       setSubmitting(true);
+      const userAssignments = Object.entries(assignedUsersMap).map(([id, tipo_permiso]) => ({
+        id: parseInt(id, 10),
+        tipo_permiso
+      }));
+      const groupAssignments = Object.entries(assignedGroupsMap).map(([id, tipo_permiso]) => ({
+        id: parseInt(id, 10),
+        tipo_permiso
+      }));
+
       await AppsService.saveAssignments(selectedAppForAssign.id, {
-        userIds: assignedUserIds,
-        groupIds: assignedGroupIds
+        userAssignments,
+        groupAssignments
       });
       setIsAssignModalOpen(false);
       fetchApps();
@@ -674,6 +695,25 @@ export const AdminApps = () => {
             </div>
           </div>
 
+          {/* Switch Requiere Seguridad */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '6px' }}>
+            <input
+              type="checkbox"
+              id="app-seguridad"
+              checked={!formData.requiere_seguridad}
+              onChange={(e) => setFormData({ ...formData, requiere_seguridad: e.target.checked ? 0 : 1 })}
+              style={{ width: '18px', height: '18px', cursor: 'pointer', marginTop: '2px' }}
+            />
+            <div>
+              <label htmlFor="app-seguridad" style={{ fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', display: 'block' }}>
+                No requiere seguridad (Pública para todos los usuarios)
+              </label>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Si se marca, todos los usuarios la verán en su tablero con acceso directo sin requerir asignaciones individuales o de grupos.
+              </span>
+            </div>
+          </div>
+
           {/* Switch Activo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
             <input
@@ -731,38 +771,75 @@ export const AdminApps = () => {
                 }}
               >
                 {allGroups.map((group) => {
-                  const isChecked = assignedGroupIds.includes(group.id);
+                  const isChecked = !!assignedGroupsMap[group.id];
+                  const currentTipo = assignedGroupsMap[group.id] || 'acceso';
                   return (
-                    <label
+                    <div
                       key={group.id}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '10px',
+                        justifyContent: 'space-between',
                         padding: '6px 8px',
                         borderRadius: '6px',
                         background: isChecked ? 'var(--surface-hover)' : 'transparent',
-                        cursor: 'pointer'
+                        gap: '10px'
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setAssignedGroupIds([...assignedGroupIds, group.id]);
-                          } else {
-                            setAssignedGroupIds(assignedGroupIds.filter(id => id !== group.id));
-                          }
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          cursor: 'pointer',
+                          flex: 1
                         }}
-                      />
-                      <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>{group.nombre}</span>
-                      {group.descripcion && (
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                          ({group.descripcion})
-                        </span>
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            const updated = { ...assignedGroupsMap };
+                            if (e.target.checked) {
+                              updated[group.id] = 'acceso';
+                            } else {
+                              delete updated[group.id];
+                            }
+                            setAssignedGroupsMap(updated);
+                          }}
+                        />
+                        <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>{group.nombre}</span>
+                        {group.descripcion && (
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            ({group.descripcion})
+                          </span>
+                        )}
+                      </label>
+
+                      {isChecked && (
+                        <select
+                          value={currentTipo}
+                          onChange={(e) => {
+                            setAssignedGroupsMap({
+                              ...assignedGroupsMap,
+                              [group.id]: e.target.value
+                            });
+                          }}
+                          style={{
+                            fontSize: '0.78rem',
+                            padding: '3px 8px',
+                            borderRadius: 'var(--radius-pill)',
+                            border: '1px solid var(--border)',
+                            background: 'var(--surface)',
+                            color: currentTipo === 'acceso' ? 'var(--success)' : 'var(--secondary)',
+                            fontWeight: 700
+                          }}
+                        >
+                          <option value="acceso">Puede acceder</option>
+                          <option value="solo_ver">Sólo ver</option>
+                        </select>
                       )}
-                    </label>
+                    </div>
                   );
                 })}
               </div>
@@ -789,9 +866,10 @@ export const AdminApps = () => {
                 }}
               >
                 {allUsers.map((u) => {
-                  const isChecked = assignedUserIds.includes(u.id);
+                  const isChecked = !!assignedUsersMap[u.id];
+                  const currentTipo = assignedUsersMap[u.id] || 'acceso';
                   return (
-                    <label
+                    <div
                       key={u.id}
                       style={{
                         display: 'flex',
@@ -800,30 +878,66 @@ export const AdminApps = () => {
                         padding: '6px 8px',
                         borderRadius: '6px',
                         background: isChecked ? 'var(--surface-hover)' : 'transparent',
-                        cursor: 'pointer'
+                        gap: '10px'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          cursor: 'pointer',
+                          flex: 1
+                        }}
+                      >
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={(e) => {
+                            const updated = { ...assignedUsersMap };
                             if (e.target.checked) {
-                              setAssignedUserIds([...assignedUserIds, u.id]);
+                              updated[u.id] = 'acceso';
                             } else {
-                              setAssignedUserIds(assignedUserIds.filter(id => id !== u.id));
+                              delete updated[u.id];
                             }
+                            setAssignedUsersMap(updated);
                           }}
                         />
                         <div>
                           <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{u.nombre}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
                         </div>
+                      </label>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {isChecked && (
+                          <select
+                            value={currentTipo}
+                            onChange={(e) => {
+                              setAssignedUsersMap({
+                                ...assignedUsersMap,
+                                [u.id]: e.target.value
+                              });
+                            }}
+                            style={{
+                              fontSize: '0.78rem',
+                              padding: '3px 8px',
+                              borderRadius: 'var(--radius-pill)',
+                              border: '1px solid var(--border)',
+                              background: 'var(--surface)',
+                              color: currentTipo === 'acceso' ? 'var(--success)' : 'var(--secondary)',
+                              fontWeight: 700
+                            }}
+                          >
+                            <option value="acceso">Puede acceder</option>
+                            <option value="solo_ver">Sólo ver</option>
+                          </select>
+                        )}
+                        <span className={`badge ${u.rol === 'admin' ? 'badge-danger' : 'badge-primary'}`}>
+                          {u.rol}
+                        </span>
                       </div>
-                      <span className={`badge ${u.rol === 'admin' ? 'badge-danger' : 'badge-primary'}`}>
-                        {u.rol}
-                      </span>
-                    </label>
+                    </div>
                   );
                 })}
               </div>

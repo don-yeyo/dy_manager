@@ -296,3 +296,119 @@ body {
   }
 }
 
+/* ========================================================================
+   ESTILOS RESPONSIVOS PARA VISTA MOBILE - TABLERO Y BOTONERA TIPO SMARTPHONE
+   ======================================================================== */
+
+.header-logo {
+  height: 36px;
+}
+
+.header-title-desktop {
+  display: flex !important;
+}
+
+.header-title-mobile {
+  display: none !important;
+}
+
+.apps-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.app-card-desktop {
+  display: flex !important;
+}
+
+.app-button-mobile {
+  display: none !important;
+}
+
+.header-search-container {
+  display: none;
+}
+
+.header-search-input {
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--text);
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.header-search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(13, 44, 92, 0.15);
+}
+
+/* En pantallas móviles (<= 768px) */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 12px 10px !important;
+  }
+
+  /* Header compacto */
+  .header-logo {
+    height: 28px !important;
+  }
+
+  .header-title-desktop {
+    display: none !important;
+  }
+
+  .header-title-mobile {
+    display: flex !important;
+  }
+
+  .header-search-container {
+    display: block !important;
+  }
+
+  /* Quitar titular del dashboard en mobile */
+  .dashboard-header-desktop {
+    display: none !important;
+  }
+
+  .dashboard-search-desktop {
+    display: none !important;
+  }
+
+  .dashboard-filter-bar {
+    padding: 8px 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  /* Grilla estilo Smartphone: 2 o 3 columnas compactas */
+  .apps-grid-container {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  @media (min-width: 480px) and (max-width: 768px) {
+    .apps-grid-container {
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 14px !important;
+    }
+  }
+
+  /* Ocultar card de escritorio y mostrar botonera smartphone */
+  .app-card-desktop {
+    display: none !important;
+  }
+
+  .app-button-mobile {
+    display: flex !important;
+  }
+
+  .app-button-mobile:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+}
+
