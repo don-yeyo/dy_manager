@@ -30,6 +30,7 @@ export const Modal = ({
 
   return createPortal(
     <div
+      className="modal-overlay"
       style={{
         position: 'fixed',
         inset: 0,
@@ -48,6 +49,7 @@ export const Modal = ({
       }}
     >
       <div
+        className="modal-container"
         style={{
           position: 'relative',
           width: '100%',
@@ -66,6 +68,7 @@ export const Modal = ({
       >
         {/* Modal Header */}
         <div
+          className="modal-header"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -74,7 +77,7 @@ export const Modal = ({
             borderBottom: '1px solid var(--border)',
           }}
         >
-          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)' }}>
+          <div className="modal-header-title" style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)' }}>
             {title}
           </div>
           {showCloseButton && (
@@ -100,6 +103,7 @@ export const Modal = ({
 
         {/* Modal Body */}
         <div
+          className="modal-body"
           style={{
             padding: '24px',
             overflowY: 'auto',

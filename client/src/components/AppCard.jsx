@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
 import { ExternalLink, ShieldCheck, Tag, Wifi, Lock, Send, Check } from 'lucide-react';
 import { StatsService } from '../services/api';
 
 export const AppCard = ({ app, onRequestAccess }) => {
+  const navigate = useNavigate();
   const [opening, setOpening] = useState(false);
 
   // Determinar si puede acceder o sólo ver
@@ -64,6 +66,7 @@ export const AppCard = ({ app, onRequestAccess }) => {
     e.preventDefault();
     if (!canAccess) {
       if (onRequestAccess) onRequestAccess(app);
+      navigate(`/solicitar-acceso/${app.id}`);
       return;
     }
 
@@ -172,8 +175,11 @@ export const AppCard = ({ app, onRequestAccess }) => {
           </button>
         ) : (
           <button
-            onClick={() => onRequestAccess && onRequestAccess(app)}
-            title={app.url}
+            onClick={() => {
+              if (onRequestAccess) onRequestAccess(app);
+              navigate(`/solicitar-acceso/${app.id}`);
+            }}
+            title="Solicitar acceso a esta herramienta"
             style={{
               width: '100%',
               display: 'flex',

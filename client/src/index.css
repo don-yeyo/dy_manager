@@ -558,4 +558,67 @@ body {
     transform: scale(0.96);
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   }
+
+  /* Modales en Mobile */
+  .modal-overlay {
+    padding: 8px !important;
+  }
+  .modal-container {
+    max-height: 94vh !important;
+    width: 100% !important;
+    border-radius: var(--radius) !important;
+  }
+  .modal-header {
+    padding: 12px 14px !important;
+  }
+  .modal-header-title {
+    font-size: 1.05rem !important;
+  }
+  .modal-body {
+    padding: 14px 12px !important;
+  }
+
+  /* Modal de Personalización en Mobile */
+  .customize-new-section-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+  .customize-new-section-row button {
+    width: 100% !important;
+  }
+  .customize-app-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+  .customize-app-controls {
+    display: flex !important;
+    justify-content: flex-end !important;
+    width: 100% !important;
+    gap: 6px !important;
+  }
+  .customize-app-controls select {
+    flex: 1 !important;
+    max-width: none !important;
+  }
+  .customize-footer {
+    flex-direction: column-reverse !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .customize-footer-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+  }
+  .customize-footer-actions button {
+    width: 100% !important;
+  }
+  .customize-footer-reset {
+    width: 100% !important;
+    justify-content: center !important;
+  }
 }
+

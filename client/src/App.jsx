@@ -8,6 +8,7 @@ import { AdminApps } from './pages/AdminApps';
 import { AdminUsersGroups } from './pages/AdminUsersGroups';
 import { AuditLog } from './pages/AuditLog';
 import { StatsDashboard } from './pages/StatsDashboard';
+import { RequestAccess } from './pages/RequestAccess';
 import { DbConnectionGuard } from './components/DbConnectionGuard';
 import { RefreshCw } from 'lucide-react';
 
@@ -74,6 +75,14 @@ export default function App() {
           element={
             <ProtectedRoute withLayout={false}>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/solicitar-acceso/:appId"
+          element={
+            <ProtectedRoute withLayout={false}>
+              <RequestAccess />
             </ProtectedRoute>
           }
         />

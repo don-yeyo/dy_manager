@@ -420,7 +420,7 @@ export const Dashboard = () => {
           </p>
 
           {/* Formulario para agregar nueva sección */}
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+          <div className="customize-new-section-row" style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
               <Input
                 label="Nuevo Titular de Grupo / Sección"
@@ -430,25 +430,25 @@ export const Dashboard = () => {
                 onKeyDown={(e) => e.key === 'Enter' && handleAddSection()}
               />
             </div>
-            <Button variant="primary" icon={Plus} onClick={handleAddSection}>
+            <Button variant="primary" icon={Plus} onClick={handleAddSection} style={{ whiteSpace: 'nowrap' }}>
               Crear Sección
             </Button>
           </div>
 
           {/* Lista de Secciones Configuradas */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxHeight: '420px', overflowY: 'auto', paddingRight: '4px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxHeight: '440px', overflowY: 'auto', paddingRight: '4px' }}>
             {tempSections.map((sec, secIdx) => (
               <div
                 key={sec.id}
                 style={{
                   border: '1px solid var(--border)',
                   borderRadius: 'var(--radius)',
-                  padding: '16px',
+                  padding: '14px',
                   background: 'var(--surface-hover)'
                 }}
               >
                 {/* Header de la Sección */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', gap: '8px' }}>
                   <input
                     type="text"
                     value={sec.titulo}
@@ -458,14 +458,16 @@ export const Dashboard = () => {
                       setTempSections(updated);
                     }}
                     style={{
-                      fontSize: '1rem',
+                      fontSize: '0.98rem',
                       fontWeight: 800,
                       background: 'transparent',
                       border: 'none',
                       borderBottom: '1px dashed var(--text-muted)',
                       color: 'var(--text)',
                       outline: 'none',
-                      padding: '2px 4px'
+                      padding: '2px 4px',
+                      flex: 1,
+                      minWidth: '120px'
                     }}
                   />
 
@@ -487,36 +489,49 @@ export const Dashboard = () => {
                     return (
                       <div
                         key={appId}
+                        className="customize-app-row"
                         style={{
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '8px 12px',
+                          padding: '8px 10px',
                           background: 'var(--surface)',
                           borderRadius: '8px',
-                          border: '1px solid var(--border)'
+                          border: '1px solid var(--border)',
+                          gap: '8px'
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{app.nombre}</span>
-                          <span className="badge" style={{ fontSize: '0.65rem' }}>{app.categoria}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                          <span style={{ fontWeight: 600, fontSize: '0.84rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {app.nombre}
+                          </span>
+                          <span className="badge badge-primary" style={{ fontSize: '0.65rem', flexShrink: 0 }}>
+                            {app.categoria || 'General'}
+                          </span>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div className="customize-app-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           {/* Subir */}
                           <button
                             type="button"
                             disabled={appIdx === 0}
                             onClick={() => handleMoveApp(secIdx, appIdx, 'up')}
                             style={{
-                              background: 'transparent',
-                              border: 'none',
+                              width: '32px',
+                              height: '32px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '6px',
+                              border: '1px solid var(--border)',
+                              background: 'var(--surface-hover)',
                               cursor: appIdx === 0 ? 'not-allowed' : 'pointer',
                               opacity: appIdx === 0 ? 0.3 : 1,
                               color: 'var(--text)'
                             }}
+                            title="Subir"
                           >
-                            <ArrowUp size={16} />
+                            <ArrowUp size={15} />
                           </button>
 
                           {/* Bajar */}
@@ -525,14 +540,21 @@ export const Dashboard = () => {
                             disabled={appIdx === sec.appIds.length - 1}
                             onClick={() => handleMoveApp(secIdx, appIdx, 'down')}
                             style={{
-                              background: 'transparent',
-                              border: 'none',
+                              width: '32px',
+                              height: '32px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '6px',
+                              border: '1px solid var(--border)',
+                              background: 'var(--surface-hover)',
                               cursor: appIdx === sec.appIds.length - 1 ? 'not-allowed' : 'pointer',
                               opacity: appIdx === sec.appIds.length - 1 ? 0.3 : 1,
                               color: 'var(--text)'
                             }}
+                            title="Bajar"
                           >
-                            <ArrowDown size={16} />
+                            <ArrowDown size={15} />
                           </button>
 
                           {/* Selector para mover a otra sección si hay más de 1 */}
@@ -546,11 +568,12 @@ export const Dashboard = () => {
                               }}
                               style={{
                                 fontSize: '0.75rem',
-                                padding: '3px 6px',
-                                borderRadius: '4px',
+                                padding: '6px 8px',
+                                borderRadius: '6px',
                                 border: '1px solid var(--border)',
-                                background: 'var(--surface)',
-                                color: 'var(--text)'
+                                background: 'var(--surface-hover)',
+                                color: 'var(--text)',
+                                maxWidth: '130px'
                               }}
                             >
                               <option value="">Mover a...</option>
@@ -574,17 +597,18 @@ export const Dashboard = () => {
           </div>
 
           {/* Footer del Modal */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+          <div className="customize-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '16px', gap: '12px' }}>
             <Button
               variant="ghost"
               size="sm"
               icon={RotateCcw}
               onClick={handleResetBoardConfig}
+              className="customize-footer-reset"
             >
               Restablecer Predeterminado
             </Button>
 
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div className="customize-footer-actions" style={{ display: 'flex', gap: '10px' }}>
               <Button variant="outline" onClick={() => setIsCustomizeModalOpen(false)}>
                 Cancelar
               </Button>
