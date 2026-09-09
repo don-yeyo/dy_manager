@@ -212,3 +212,87 @@ body {
 .dy-table tbody tr:last-child td {
   border-bottom: none;
 }
+
+/* ========================================================================
+   ESTILOS DE LOGIN Y TOGGLE (DIRECTO DE dy_control_ingresos_egresos)
+   ======================================================================== */
+.login-container {
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: var(--radius-lg);
+}
+
+.login-options {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.btn-microsoft,
+.btn-google {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px 24px !important;
+  gap: 12px !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  border-radius: var(--radius-pill) !important;
+  width: 100% !important;
+  max-width: 340px !important;
+  min-width: 280px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background-color: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+  cursor: pointer !important;
+}
+
+.btn-microsoft:hover,
+.btn-google:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: var(--shadow) !important;
+  border-color: var(--primary) !important;
+}
+
+.mode-toggle {
+  background: transparent;
+  padding: 8px;
+  border-radius: 50%;
+  color: var(--text);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.mode-toggle:hover {
+  background: var(--surface-hover);
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 32px 16px !important;
+  }
+
+  .btn-microsoft,
+  .btn-google {
+    padding: 14px 20px !important;
+    font-size: 0.95rem !important;
+    width: 100% !important;
+  }
+}
+

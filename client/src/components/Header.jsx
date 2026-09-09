@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Menu, Sun, Moon, LogOut, Shield, User } from 'lucide-react';
 import { useAuth } from '../config/AuthContext';
 import { useTheme } from '../config/ThemeContext';
+import logo from '../assets/logo-don-yeyo-png-sin-fondo.png';
 
 export const Header = ({ onToggleDrawer }) => {
   const { user, logout, isAdmin } = useAuth();
@@ -62,23 +63,11 @@ export const Header = ({ onToggleDrawer }) => {
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div
-            style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #0d2c5c 0%, #1a4b8c 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              fontWeight: 800,
-              fontSize: '1rem',
-              boxShadow: '0 2px 6px rgba(13, 44, 92, 0.3)'
-            }}
-          >
-            DY
-          </div>
+          <img
+            src={logo}
+            alt="Don Yeyo"
+            style={{ height: '36px', objectFit: 'contain' }}
+          />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--header-text)', letterSpacing: '-0.02em' }}>
