@@ -10,7 +10,7 @@ coverage/
 dist/
 build/
 dev-dist/
-
+docs/
 # Variables de entorno y secretos
 .env
 .env.local

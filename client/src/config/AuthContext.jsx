@@ -78,9 +78,25 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      await instance.loginPopup(loginRequest);
+      // En smartphones y navegadores móviles, loginRedirect es indispensable
+      // para evitar bloqueos de popup y el error hash_empty_error
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+
+      if (isMobile) {
+        await instance.loginRedirect(loginRequest);
+      } else {
+        try {
+          await instance.loginPopup(loginRequest);
+        } catch (popupError) {
+          console.warn('[AuthContext] loginPopup no permitido o bloqueado, intentando con loginRedirect:', popupError);
+          await instance.loginRedirect(loginRequest);
+        }
+      }
     } catch (error) {
       console.error('[AuthContext] Error en login:', error);
+      if (error.message?.includes('hash_empty_error')) {
+        window.location.hash = '';
+      }
       setAuthError('Fallo al iniciar sesión con Microsoft: ' + error.message);
     }
   };
@@ -93,7 +109,12 @@ export const AuthProvider = ({ children }) => {
         window.location.href = '/login';
         return;
       }
-      await instance.logoutPopup();
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+      if (isMobile) {
+        await instance.logoutRedirect();
+      } else {
+        await instance.logoutPopup();
+      }
     } catch (error) {
       console.error('[AuthContext] Error en logout:', error);
       window.location.href = '/login';

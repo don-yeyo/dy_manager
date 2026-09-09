@@ -10,14 +10,35 @@ import './index.css';
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <MsalProvider instance={msalInstance}>
-      <ThemeProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </ThemeProvider>
-    </MsalProvider>
-  </React.StrictMode>
-);
+// Inicializar MSAL y procesar cualquier redirección pendiente antes de montar React
+const initApp = async () => {
+  try {
+    await msalInstance.initialize();
+    const response = await msalInstance.handleRedirectPromise();
+    if (response?.account) {
+      msalInstance.setActiveAccount(response.account);
+    } else {
+      const currentAccounts = msalInstance.getAllAccounts();
+      if (currentAccounts.length > 0) {
+        msalInstance.setActiveAccount(currentAccounts[0]);
+      }
+    }
+  } catch (error) {
+    console.warn('[MSAL Init Warning]:', error);
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <MsalProvider instance={msalInstance}>
+        <ThemeProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </ThemeProvider>
+      </MsalProvider>
+    </React.StrictMode>
+  );
+};
+
+initApp();
+
