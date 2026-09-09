@@ -1,0 +1,214 @@
+:root {
+  /* Don Yeyo Palette */
+  --dy-blue: #0d2c5c;
+  --dy-red: #e40521;
+  --dy-light-gray: #f8fafc;
+
+  /* Generic UI Tokens (Light-Mode Default) */
+  --primary: var(--dy-blue);
+  --primary-hover: #1a4b8c;
+  --secondary: var(--dy-red);
+  --accent: var(--dy-red);
+  --background: #f4f4f4;
+  --surface: #ffffff;
+  --surface-hover: #f1f5f9;
+  --text: #0d2c5c;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --glass: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(13, 44, 92, 0.1);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.12), 0 8px 10px -6px rgb(0 0 0 / 0.08);
+  --radius: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 50px;
+
+  --btn-primary-bg: #0d2c5c;
+  --btn-primary-text: #ffffff;
+  --header-text: #0d2c5c;
+  --drawer-title: #0d2c5c;
+  --drawer-footer: #0d2c5c;
+}
+
+.dark-theme {
+  --dy-red: #ff758f;
+  --error: #fb7185;
+  --background: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --primary: #f8fafc;
+  --primary-hover: #e2e8f0;
+  --border: #334155;
+  --glass: rgba(30, 41, 59, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.4);
+
+  --btn-primary-bg: #f8fafc;
+  --btn-primary-text: #0d2c5c;
+  --header-text: #f8fafc;
+  --drawer-title: #94a3b8;
+  --drawer-footer: #94a3b8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Montserrat', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Glassmorphism helpers */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Animaciones suaves */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pop-in {
+  animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Badges & Tags */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.02em;
+}
+
+.badge-primary {
+  background: rgba(13, 44, 92, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(13, 44, 92, 0.2);
+}
+.dark-theme .badge-primary {
+  background: rgba(248, 250, 252, 0.1);
+  color: #f8fafc;
+  border: 1px solid rgba(248, 250, 252, 0.2);
+}
+
+.badge-danger {
+  background: rgba(228, 5, 33, 0.1);
+  color: var(--secondary);
+  border: 1px solid rgba(228, 5, 33, 0.2);
+}
+
+.badge-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* Tarjetas y Contenedores */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary);
+}
+
+/* Tablas con diseño Don Yeyo */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.dy-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.dy-table th {
+  background: var(--surface-hover);
+  padding: 14px 18px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.dy-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.dy-table tbody tr:hover {
+  background-color: var(--surface-hover);
+}
+
+.dy-table tbody tr:last-child td {
+  border-bottom: none;
+}
