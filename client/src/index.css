@@ -32,6 +32,11 @@
   --header-text: #0d2c5c;
   --drawer-title: #0d2c5c;
   --drawer-footer: #0d2c5c;
+
+  /* Avatar tokens con contraste garantizado */
+  --avatar-admin-bg: #e40521;
+  --avatar-user-bg: #0d2c5c;
+  --avatar-text: #ffffff;
 }
 
 .dark-theme {
@@ -55,6 +60,11 @@
   --header-text: #f8fafc;
   --drawer-title: #94a3b8;
   --drawer-footer: #94a3b8;
+
+  /* Avatar tokens para dark mode: azul vibrante y rojo vivo para contraste nítido con texto blanco */
+  --avatar-admin-bg: #e40521;
+  --avatar-user-bg: #2563eb;
+  --avatar-text: #ffffff;
 }
 
 * {
@@ -326,34 +336,151 @@ body {
   display: none !important;
 }
 
-.header-search-container {
-  display: none;
-}
-
-.header-search-input {
-  width: 100%;
+/* Header Action Buttons (Personalizar, Tema, Avatar) */
+.header-action-btn,
+.header-customize-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
   padding: 8px 14px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border);
-  background: var(--background);
-  color: var(--text);
-  font-size: 0.85rem;
-  outline: none;
-  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
 }
 
-.header-search-input:focus {
+.header-action-btn:hover,
+.header-customize-btn:hover {
+  background: var(--surface-hover);
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(13, 44, 92, 0.15);
+  transform: translateY(-1px);
+}
+
+.header-avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px 12px 4px 4px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.header-avatar-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+}
+
+.avatar-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--avatar-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+}
+
+.avatar-circle-admin {
+  background: var(--avatar-admin-bg);
+}
+
+.avatar-circle-user {
+  background: var(--avatar-user-bg);
+}
+
+.header-user-info {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Buscador Sticky Ocupando Todo el Ancho */
+.dashboard-sticky-search {
+  position: sticky;
+  top: 60px;
+  z-index: 85;
+  background: var(--background);
+  padding: 10px 0 14px 0;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.dashboard-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 10px 18px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.dashboard-search-bar:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(13, 44, 92, 0.12);
+}
+
+.dashboard-search-input-full {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 500;
+  outline: none;
+}
+
+.dashboard-search-input-full::placeholder {
+  color: var(--text-muted);
+}
+
+.search-clear-button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: color 0.15s;
+}
+
+.search-clear-button:hover {
+  color: var(--text);
 }
 
 /* En pantallas móviles (<= 768px) */
 @media (max-width: 768px) {
   .main-content {
-    padding: 12px 10px !important;
+    padding: 10px 12px !important;
   }
 
-  /* Header compacto */
+  /* Header mobile: escrolea con la página */
+  header.header-nav {
+    position: relative !important;
+    top: auto !important;
+  }
+
   .header-logo {
     height: 28px !important;
   }
@@ -366,22 +493,42 @@ body {
     display: flex !important;
   }
 
-  .header-search-container {
-    display: block !important;
+  /* Avatar móvil: totalmente circular y simétrico */
+  .header-avatar-btn {
+    padding: 3px !important;
+    border-radius: 50% !important;
+    gap: 0 !important;
+  }
+
+  .header-user-info {
+    display: none !important;
+  }
+
+  /* Botón personalizar tablero en mobile: icono circular */
+  .header-customize-btn {
+    padding: 8px !important;
+    border-radius: 50% !important;
+    gap: 0 !important;
+  }
+
+  .header-customize-text {
+    display: none !important;
+  }
+
+  /* Buscador pegado arriba al escrolear */
+  .dashboard-sticky-search {
+    top: 0 !important;
+    padding: 8px 0 10px 0 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .dashboard-search-bar {
+    padding: 8px 14px !important;
   }
 
   /* Quitar titular del dashboard en mobile */
   .dashboard-header-desktop {
     display: none !important;
-  }
-
-  .dashboard-search-desktop {
-    display: none !important;
-  }
-
-  .dashboard-filter-bar {
-    padding: 8px 10px !important;
-    margin-bottom: 14px !important;
   }
 
   /* Grilla estilo Smartphone: 2 o 3 columnas compactas */
@@ -411,4 +558,3 @@ body {
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   }
 }
-

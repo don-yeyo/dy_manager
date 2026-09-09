@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, Sun, Moon, LogOut, Shield, User } from 'lucide-react';
+import { Menu, Sun, Moon, LogOut, Shield, User, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '../config/AuthContext';
 import { useTheme } from '../config/ThemeContext';
 import logo from '../assets/logo-don-yeyo-png-sin-fondo.png';
 
-export const Header = ({ onToggleDrawer, search, onSearchChange, showSearchInHeader = false }) => {
+export const Header = ({ onToggleDrawer, onCustomizeBoard, onOpenCustomize }) => {
   const { user, logout, isAdmin } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const handleCustomize = onCustomizeBoard || onOpenCustomize;
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -31,7 +33,7 @@ export const Header = ({ onToggleDrawer, search, onSearchChange, showSearchInHea
 
   return (
     <header
-      className="glass"
+      className="glass header-nav"
       style={{
         position: 'sticky',
         top: 0,
@@ -119,82 +121,51 @@ export const Header = ({ onToggleDrawer, search, onSearchChange, showSearchInHea
         </div>
       </div>
 
-      {/* Centro: Buscador integrado en Header (visible especialmente en mobile si está activo) */}
-      {showSearchInHeader && (
-        <div className="header-search-container" style={{ flex: 1, maxWidth: '420px', margin: '0 8px' }}>
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="header-search-input"
-          />
-        </div>
-      )}
+      {/* Lado Derecho: Personalizar Tablero + Toggle de Tema + Avatar Usuario */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Botón Personalizar Tablero en Navbar */}
+        {handleCustomize && (
+          <button
+            onClick={handleCustomize}
+            className="header-customize-btn"
+            title="Personalizar Tablero de Aplicaciones"
+            aria-label="Personalizar Tablero"
+          >
+            <SlidersHorizontal size={17} />
+            <span className="header-customize-text">Personalizar</span>
+          </button>
+        )}
 
-      {/* Lado Derecho: Toggle de Tema + Avatar Usuario */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {/* Toggle Claro / Oscuro */}
         <button
           onClick={toggleTheme}
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            color: 'var(--text)',
-            cursor: 'pointer',
-            padding: '8px 12px',
-            borderRadius: 'var(--radius-pill)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            boxShadow: 'var(--shadow-sm)'
-          }}
+          className="header-action-btn"
+          style={{ padding: '8px 12px' }}
           title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
         >
           {isDark ? <Sun size={17} color="#f59e0b" /> : <Moon size={17} color="#0d2c5c" />}
         </button>
 
-        {/* Dropdown de Usuario */}
+        {/* Dropdown de Usuario / Avatar */}
         {user && (
           <div style={{ position: 'relative' }} ref={dropdownRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                padding: '4px 12px 4px 6px',
-                borderRadius: 'var(--radius-pill)',
-                cursor: 'pointer',
-                boxShadow: 'var(--shadow-sm)'
-              }}
+              className="header-avatar-btn"
+              title={`Usuario: ${user.nombre} (${isAdmin() ? 'Administrador' : 'Usuario'})`}
+              aria-label="Menú de usuario"
             >
               <div
-                style={{
-                  width: '34px',
-                  height: '34px',
-                  borderRadius: '50%',
-                  background: isAdmin() ? 'var(--secondary)' : 'var(--primary)',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '0.85rem'
-                }}
+                className={`avatar-circle ${isAdmin() ? 'avatar-circle-admin' : 'avatar-circle-user'}`}
               >
                 {getInitials(user.nombre)}
               </div>
-              <div style={{ textAlign: 'left', display: 'none', md: 'block' }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>
+              <div className="header-user-info">
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap' }}>
                   {user.nombre?.split(' ')[0]}
                 </div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                  {user.rol === 'admin' ? 'Administrador' : 'Usuario'}
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                  {isAdmin() ? 'Administrador' : 'Usuario'}
                 </div>
               </div>
             </button>

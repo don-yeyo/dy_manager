@@ -63,9 +63,11 @@ Portal y Hub centralizado para nuclear el acceso a todas las herramientas y sist
     - Captura inmediatamente cualquier error 500 o fallo de red en peticiones Axios mediante un CustomEvent global (`api-request-failed`), verificando al instante el estado de la BD.
     - Despliega un Modal crítico no cerrable con aviso visual y botón de reintento ("Reintentar Conexión"). Al restablecer la comunicación, recarga la aplicación automáticamente para evitar inconsistencias de estado.
 
-11. **Vista Mobile Optimizada (Botonera Smartphone & DYM):**
+11. **Vista Mobile Optimizada (Botonera Smartphone, Buscador Sticky & DYM):**
     - En dispositivos móviles, la barra superior se compacta mostrando el isotipo y las siglas **DY<span style="color:#e40521">M</span>** (con la M roja) junto a la versión sutil del aplicativo.
-    - El buscador de aplicaciones se ubica dinámicamente en el Navbar para ahorrar espacio vertical.
+    - **Buscador Sticky de Ancho Completo:** Se ubica inmediatamente después del Navbar ocupando todo el ancho. Al desplazarse por la pantalla, el Navbar superior escrolea con la página pero el buscador se pega automáticamente al tope superior (`position: sticky; top: 0`), manteniéndose accesible en todo momento.
+    - **Acceso a Personalización desde el Navbar:** Incorpora un botón con icono (`SlidersHorizontal`) directamente en la barra superior para abrir el modal de personalización del tablero tanto en escritorio como en mobile.
+    - **Avatar Simétrico con Alto Contraste:** Botón concéntrico simétrico y fondo circular de alto contraste (Rojo Don Yeyo para Administradores y Azul corporativo saturado para Usuarios) garantizando legibilidad total del texto interno en temas Claro y Oscuro.
     - El titular *"Tablero de Aplicaciones"* se remueve en mobile y si el usuario cuenta con un solo agrupamiento, se oculta el título redundante.
     - Las tarjetas de acceso se transforman en una **botonera compacta táctil estilo smartphone** (apps con icono grande y nombre a dos líneas).
     - Para los usuarios regulares (`rol: 'user'`), se desactiva el Drawer menú lateral, ofreciendo una experiencia enfocada y minimalista.

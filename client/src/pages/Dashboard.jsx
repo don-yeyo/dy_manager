@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, 
-  Filter, 
+  X,
   Shield, 
   AlertCircle, 
   RefreshCw, 
@@ -30,7 +30,6 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [showAllAsAdmin, setShowAllAsAdmin] = useState(false);
 
   // Estados de Personalización del Tablero
@@ -196,34 +195,48 @@ export const Dashboard = () => {
     }
   };
 
-  // Extraer categorías únicas para filtro
-  const categories = ['Todas', ...new Set(apps.map(a => a.categoria || 'General').filter(Boolean))];
-
   // Filtrado reactivo para búsqueda
   const filterMatches = (app) => {
-    const matchesSearch =
-      app.nombre.toLowerCase().includes(search.toLowerCase()) ||
-      (app.descripcion && app.descripcion.toLowerCase().includes(search.toLowerCase())) ||
-      (app.categoria && app.categoria.toLowerCase().includes(search.toLowerCase()));
-
-    const matchesCategory =
-      selectedCategory === 'Todas' || (app.categoria || 'General') === selectedCategory;
-
-    return matchesSearch && matchesCategory;
+    if (!search.trim()) return true;
+    const q = search.toLowerCase().trim();
+    return (
+      app.nombre?.toLowerCase().includes(q) ||
+      (app.descripcion && app.descripcion.toLowerCase().includes(q)) ||
+      (app.categoria && app.categoria.toLowerCase().includes(q))
+    );
   };
 
   // Mapeo rápido de apps por ID
   const appsById = new Map(apps.map(a => [a.id, a]));
 
   return (
-    <Layout
-      headerProps={{
-        search,
-        onSearchChange: setSearch,
-        showSearchInHeader: true
-      }}
-    >
+    <Layout onCustomizeBoard={openCustomizeModal}>
       <div className="animate-fade-in">
+        {/* Buscador de Aplicaciones Sticky (Línea posterior al Navbar, todo el ancho) */}
+        <div className="dashboard-sticky-search">
+          <div className="dashboard-search-bar">
+            <Search size={18} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            <input
+              type="text"
+              placeholder="Buscar aplicación o acceso directo..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="dashboard-search-input-full"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="search-clear-button"
+                title="Limpiar búsqueda"
+                aria-label="Limpiar búsqueda"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Header del Dashboard en Desktop (en mobile se oculta por clase CSS dashboard-header-desktop) */}
         <div className="dashboard-header-desktop" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
@@ -270,79 +283,6 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Barra de Filtros por Categoría */}
-        <div
-          className="dashboard-filter-bar"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-            marginBottom: '20px',
-            padding: '10px 14px',
-            background: 'var(--surface)',
-            borderRadius: 'var(--radius)',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-sm)'
-          }}
-        >
-          {/* Buscador Desktop (en mobile está en el header) */}
-          <div className="dashboard-search-desktop" style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
-            <Search
-              size={17}
-              style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--text-muted)'
-              }}
-            />
-            <input
-              type="text"
-              placeholder="Buscar aplicación..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px 8px 38px',
-                borderRadius: 'var(--radius-pill)',
-                border: '1px solid var(--border)',
-                background: 'var(--background)',
-                color: 'var(--text)',
-                outline: 'none',
-                fontSize: '0.85rem'
-              }}
-            />
-          </div>
-
-          {/* Categorías en chips */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', maxWidth: '100%', paddingBottom: '2px' }}>
-            <Filter size={15} color="var(--text-muted)" style={{ marginRight: '2px', flexShrink: 0 }} />
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 'var(--radius-pill)',
-                  border: `1px solid ${selectedCategory === cat ? 'var(--primary)' : 'var(--border)'}`,
-                  background: selectedCategory === cat ? 'var(--btn-primary-bg)' : 'transparent',
-                  color: selectedCategory === cat ? 'var(--btn-primary-text)' : 'var(--text-muted)',
-                  fontSize: '0.78rem',
-                  fontWeight: selectedCategory === cat ? 700 : 500,
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Estados: Loading o Error */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
@@ -381,7 +321,7 @@ export const Dashboard = () => {
               Comunícate con el Administrador para que asigne las herramientas necesarias a tu cuenta o grupo.
             </p>
           </div>
-        ) : hasCustomConfig && customSections.length > 0 && !search && selectedCategory === 'Todas' ? (
+        ) : hasCustomConfig && customSections.length > 0 && !search.trim() ? (
           /* VISTA PERSONALIZADA: Si sólo hay 1 sección, se oculta el título según el requerimiento */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             {customSections.map((sec) => {
@@ -469,16 +409,46 @@ export const Dashboard = () => {
             })()}
           </div>
         ) : (
-          /* VISTA ESTÁNDAR (O con Búsqueda/Filtro activo) */
-          <div className="apps-grid-container">
-            {apps.filter(filterMatches).map((app) => (
-              <AppCard 
-                key={app.id} 
-                app={app} 
-                onRequestAccess={handleOpenRequestAccess}
-              />
-            ))}
-          </div>
+          /* VISTA ESTÁNDAR (O con Búsqueda activa) */
+          apps.filter(filterMatches).length === 0 ? (
+            <div
+              className="card"
+              style={{
+                textAlign: 'center',
+                padding: '48px 24px',
+                color: 'var(--text-muted)'
+              }}
+            >
+              <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>
+                No se encontraron aplicaciones para "{search}"
+              </p>
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--secondary)',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Borrar búsqueda
+              </button>
+            </div>
+          ) : (
+            <div className="apps-grid-container">
+              {apps.filter(filterMatches).map((app) => (
+                <AppCard 
+                  key={app.id} 
+                  app={app} 
+                  onRequestAccess={handleOpenRequestAccess}
+                />
+              ))}
+            </div>
+          )
         )}
 
       {/* Modal: Personalizar Tablero y Titulares */}

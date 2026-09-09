@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Header } from './Header';
 import { Drawer } from './Drawer';
 
-export const Layout = ({ children, headerProps }) => {
+export const Layout = ({ children, headerProps, onCustomizeBoard }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header 
         onToggleDrawer={() => setDrawerOpen(prev => !prev)} 
+        onCustomizeBoard={onCustomizeBoard || headerProps?.onCustomizeBoard}
         {...headerProps}
       />
       <Drawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
