@@ -22,7 +22,7 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir solicitudes sin origen (como curl o Postman) o si coincide con los permitidos
+    // Permitir solicitudes sin origen (curl, healthchecks, Postman) o si coincide con los permitidos
     if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
       callback(null, true);
     } else {
@@ -32,7 +32,9 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+// Límite ampliado a 10MB para soportar iconos PNG en Base64 cargados por el administrador
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('dev'));
 
 // Rate Limiting general (protección contra saturación)
@@ -50,6 +52,7 @@ const usersRoutes = require('./routes/users');
 const groupsRoutes = require('./routes/groups');
 const statsRoutes = require('./routes/stats');
 const auditRoutes = require('./routes/audit');
+const userConfigRoutes = require('./routes/userConfig');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/apps', appsRoutes);
@@ -57,6 +60,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/groups', groupsRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/user-config', userConfigRoutes);
 
 // Healthcheck
 app.get('/api/health', (req, res) => {
@@ -81,10 +85,15 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, HOST, () => {
-  console.log(`========================================================`);
-  console.log(`🚀 Don Yeyo Manager Backend corriendo en http://${HOST}:${PORT}`);
-  console.log(`🔒 Entorno: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 CORS permitido para: ${allowedOrigins.join(', ')}`);
-  console.log(`========================================================`);
-});
+// Solo escuchar en puerto local si no está corriendo como Serverless Function (Netlify)
+if (process.env.NODE_ENV !== 'production' || !process.env.NETLIFY) {
+  app.listen(PORT, HOST, () => {
+    console.log(`========================================================`);
+    console.log(`🚀 Don Yeyo Manager Backend corriendo en http://${HOST}:${PORT}`);
+    console.log(`🔒 Entorno: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌐 CORS permitido para: ${allowedOrigins.join(', ')}`);
+    console.log(`========================================================`);
+  });
+}
+
+module.exports = app;

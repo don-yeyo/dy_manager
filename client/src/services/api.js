@@ -84,4 +84,10 @@ export const AuditService = {
   getLogs: (params) => api.get('/audit', { params })
 };
 
+export const UserConfigService = {
+  getBoardConfig: () => api.get('/user-config/board'),
+  saveBoardConfig: (secciones) => api.put('/user-config/board', { secciones })
+};
+
 export default api;
+

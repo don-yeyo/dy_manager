@@ -1,15 +1,19 @@
 # Don Yeyo Manager
 
-Portal y Hub centralizado para nuclear el acceso a todas las herramientas y sistemas web corporativos de **Don Yeyo S.A.** Permite a los colaboradores acceder a sus aplicaciones de trabajo en un tablero interactivo según sus permisos asignados (individualmente o por pertenencia a grupos), garantizando seguridad, auditoría atómica mediante Triggers de base de datos y estadísticas de uso en tiempo real.
+Portal y Hub centralizado para nuclear el acceso a todas las herramientas y sistemas web corporativos de **Don Yeyo S.A.** Permite a los colaboradores acceder a sus aplicaciones de trabajo en un tablero interactivo según sus permisos asignados (individualmente o por pertenencia a grupos), garantizando seguridad, auditoría atómica mediante Triggers de base de datos, estadísticas de uso en tiempo real, soporte PWA y despliegue serverless en **Netlify Functions**.
 
 ---
 
 ## 🌟 Características Principales
 
-1. **Tablero de Aplicaciones Dinámico (RBAC):**
+1. **Tablero de Aplicaciones Dinámico (RBAC) y Personalizable:**
    - Muestra a cada usuario únicamente los sistemas autorizados a los que tiene permiso (asignación directa al usuario o heredada a través de sus grupos).
+   - **Personalización del Tablero por Usuario:**
+     - El usuario puede crear sus propias agrupaciones bajo titulares personalizados (ej. *Mis Favoritos*, *Accesos Diarios*, *Planta & Operaciones*).
+     - Permite reordenar los enlaces en la grilla y moverlos entre secciones.
+     - Se persiste en la tabla `usuario_tablero_config` de MySQL, manteniendo la misma configuración desde cualquier dispositivo (smartphone, tablet o PC de escritorio).
    - Buscador interactivo en tiempo real por nombre, descripción o área.
-   - Filtros dinámicos por categorías (Seguridad, Logística, Producción, Administración, etc.).
+   - Filtros dinámicos por categorías (*Seguridad*, *Logística*, *Producción*, *Administración*, etc.).
    - Apertura segura en nueva pestaña (`rel="noopener noreferrer"`).
    - Soporte total para enlaces:
      - Protocolos: `http://` y `https://`.
@@ -17,95 +21,88 @@ Portal y Hub centralizado para nuclear el acceso a todas las herramientas y sist
      - Puertos explícitos: `:8080`, `:3000`, `:8443`, etc.
      - Rutas y parámetros de consulta: `/sistema/modulo?origen=portal&emp=1`.
 
-2. **Gestor de Roles y Grupos:**
-   - Roles iniciales: `admin` (administrador general) y `user` (usuario estándar).
-   - Los administradores pueden crear grupos corporativos (ej. *Planta & Producción*, *Mantenimiento*, *Dirección*, *Portería*) y asignar aplicaciones tanto a un grupo entero como a usuarios individuales.
+2. **Iconos Opcionales Persistidos en Base de Datos (PNG Base64 o Flat Icons):**
+   - El administrador puede configurar opcionalmente un icono para cada aplicación.
+   - Soporta catálogo de iconos flat vectoriales (Lucide) o subida directa de imágenes PNG/SVG.
+   - Las imágenes se comprimen a canvas (máx 128x128) y se guardan como Data URL en Base64 en la columna `icono` (`MEDIUMTEXT`) de MySQL, permitiendo funcionamiento 100% serverless en Netlify sin requerir almacenamiento de archivos local.
 
-3. **Auditoría Inmutable mediante TRIGGERS de MySQL:**
-   - La base de datos cuenta con triggers automáticos `AFTER INSERT`, `AFTER UPDATE` y `AFTER DELETE` en todas las entidades críticas (`usuarios`, `grupos`, `usuarios_grupos`, `aplicaciones`, `asignaciones_usuarios`, `asignaciones_grupos`).
+3. **PWA (Progressive Web App):**
+   - La aplicación es instalable en dispositivos móviles y de escritorio gracias a `vite-plugin-pwa`.
+   - Incluye manifest corporativo Don Yeyo, iconos optimizados (192x192 y 512x512 maskable) y service worker automático para precaching de assets estáticos.
+
+4. **Insignia de Versión Dinámica:**
+   - La versión mostrada en el Header corporativo se toma automáticamente desde la línea 3 de `package.json` mediante la constante `__APP_VERSION__` inyectada en Vite.
+
+5. **Auditoría Inmutable mediante TRIGGERS de MySQL:**
+   - Triggers automáticos `AFTER INSERT`, `AFTER UPDATE` y `AFTER DELETE` en todas las entidades críticas (`usuarios`, `grupos`, `usuarios_grupos`, `aplicaciones`, `asignaciones_usuarios`, `asignaciones_grupos`).
    - Registra snapshots completos en formato `JSON` (`datos_anteriores` y `datos_nuevos`), asociando la fecha y el usuario responsable mediante la variable de sesión `@app_current_user`.
    - Visor de auditoría integrado de **solo lectura** para el Administrador con comparador visual de cambios (Diff JSON).
 
-4. **Estadísticas de Accesos a la Botonera:**
-   - Registra cada ingreso/clic a un enlace de la botonera en la tabla `estadisticas_accesos` (con fecha, usuario, IP y navegador).
-   - **Regla estricta:** Esta tabla **NO** tiene triggers de auditoría para garantizar alta concurrencia y no contaminar los logs de cambios administrativos.
-   - Panel de estadísticas de **solo lectura** para el Administrador con métricas KPI, rankings de aplicaciones más utilizadas y logs detallados.
+6. **Estadísticas de Accesos a la Botonera:**
+   - Registra cada ingreso/clic a un enlace en `estadisticas_accesos` (con fecha, usuario, IP y navegador).
+   - **Regla estricta:** Esta tabla **NO** tiene triggers de auditoría para garantizar alta concurrencia y no contaminar los logs administrativos.
+   - Panel de estadísticas de **solo lectura** para el Administrador con métricas KPI, rankings de aplicaciones más visitadas y logs detallados.
 
-5. **Autenticación SSO Microsoft (Entra ID) & Modo Mock:**
-   - Soporte nativo para inicio de sesión corporativo con cuentas Office 365 (`@donyeyo.com.ar`) usando MSAL (`@azure/msal-browser` y `@azure/msal-react`).
+7. **Seguridad y Encapsulación Estricta:**
+   - Ninguna credencial ni dato crítico de la base de datos es expuesto en el frontend.
+   - Toda la lógica sensible queda encapsulada en el backend / Netlify Functions detrás de middlewares de autenticación y validación de roles.
+
+8. **Autenticación SSO Microsoft (Entra ID) & Modo Mock:**
+   - Soporte nativo para inicio de sesión corporativo con cuentas Office 365 (`@donyeyo.com.ar`) usando MSAL.
    - Sincronización automática de usuarios al iniciar sesión.
    - **Bypass de Desarrollo (Mock Auth):** Permite trabajar y depurar localmente sin conexión activa a Azure AD mediante `VITE_MOCK_AUTH=true`.
 
-6. **Estética y Sistema de Diseño Don Yeyo:**
-   - Basado en el estándar corporativo de `dy_control_ingresos_egresos`.
+9. **Estética y Sistema de Diseño Don Yeyo:**
+   - Basado en el estándar de `dy_control_ingresos_egresos`.
    - Vanilla CSS modular con variables CSS (`--dy-blue: #0d2c5c`, `--dy-red: #e40521`).
-   - Efectos Glassmorphic con `backdrop-filter`, tema Claro y Oscuro persistido en el navegador, Header corporativo y Drawer retráctil con control de acceso por rol.
+   - Efectos Glassmorphic con `backdrop-filter`, tema Claro y Oscuro persistido en el navegador, Header corporativo y Drawer retráctil con RBAC.
 
 ---
 
-## 🏛️ Arquitectura del Monorepo
+## 🏛️ Arquitectura y Despliegue en Netlify
 
 ```
 DonYeyoMannager/
-├── package.json               # Scripts concurrentes raíz (dev, install-all, build)
-├── .gitignore                 # Reglas de exclusión para Git
-├── .env.template              # Plantilla de variables de entorno global
-├── .env                       # Variables locales del proyecto
+├── netlify.toml               # Configuración de Netlify: build, redirects y funciones
 ├── schema.sql                 # DDL de MySQL con tablas, índices, seeds y TRIGGERS
 ├── README.md                  # Documentación principal del sistema
-├── client/                    # Frontend React 19 + Vite 6
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── index.html
-│   ├── .env.template
-│   ├── .env
+├── package.json               # Versión de la herramienta y scripts generales
+├── .env.template              # Plantilla de variables de entorno global
+├── .gitignore                 # Reglas limpias de exclusión para Git
+├── client/                    # Frontend React 19 + Vite 6 + PWA
+│   ├── package.json           # Dependencias cliente autónomas
+│   ├── vite.config.js         # Configuración Vite, PWA y define __APP_VERSION__
+│   ├── index.html             # Entrypoint HTML con viewport y Google Fonts
 │   ├── public/
-│   │   └── favicon.svg        # Isotipo Don Yeyo
+│   │   ├── favicon.svg        # Isotipo Don Yeyo
+│   │   └── icons/             # Iconos PWA (icon-192x192.png, icon-512x512.png)
 │   └── src/
 │       ├── index.css          # Tokens CSS Don Yeyo, glassmorphism y tema oscuro
 │       ├── main.jsx           # Entrypoint con MsalProvider y ThemeProvider
 │       ├── App.jsx            # Enrutamiento y Route Guards (Auth & Admin)
-│       ├── config/
-│       │   ├── msal.js        # Configuración Azure AD
-│       │   ├── AuthContext.jsx# Estado de autenticación SSO y Mock
-│       │   └── ThemeContext.jsx # Manejador de tema claro/oscuro
-│       ├── components/
-│       │   ├── Layout.jsx     # Contenedor con Header y Drawer
-│       │   ├── Header.jsx     # Barra superior con logo, toggle tema y avatar
-│       │   ├── Drawer.jsx     # Menú lateral responsivo con RBAC
-│       │   ├── AppCard.jsx    # Tarjeta de aplicación con métricas y apertura
-│       │   ├── Modal.jsx      # Diálogos emergentes con glassmorphism
-│       │   ├── Button.jsx     # Botones primarios, secundarios y de peligro
-│       │   └── FormElements.jsx # Inputs, selects y textareas
-│       ├── pages/
-│       │   ├── Login.jsx      # Pantalla de bienvenida Don Yeyo
-│       │   ├── Dashboard.jsx  # Tablero de aplicaciones asignadas
-│       │   ├── AdminApps.jsx  # Gestor de catálogo y asignación de apps
-│       │   ├── AdminUsersGroups.jsx # Gestor de usuarios, roles y grupos
-│       │   ├── AuditLog.jsx   # Visor de auditoría por triggers (solo lectura)
-│       │   └── StatsDashboard.jsx # Panel de estadísticas de accesos (solo lectura)
-│       └── services/
-│           └── api.js         # Cliente Axios e interceptor de sesión
-└── server/                    # Backend Node.js Express
-    ├── package.json
-    ├── index.js               # Entrypoint con Helmet, CORS, Morgan y Rate-limit
-    ├── .env.template
-    ├── .env
+│       ├── config/            # AuthContext, ThemeContext, msal.js
+│       ├── components/        # Layout, Header, Drawer, AppCard, Modal, Button, FormElements
+│       ├── pages/             # Dashboard, AdminApps, AdminUsersGroups, AuditLog, StatsDashboard, Login
+│       └── services/          # Cliente Axios (AuthService, AppsService, UserConfigService, etc.)
+└── server/                    # Backend Node.js Express + Serverless Function
+    ├── package.json           # Dependencias backend autónomas
+    ├── index.js               # Servidor Express con Helmet, CORS, Morgan y Rate-limit
+    ├── netlify-handler.js     # Handler serverless-http para Netlify Functions
     ├── config/
     │   └── db.js              # Pool MySQL y executeWithUser para triggers
-    ├── middlewares/
-    │   ├── authMiddleware.js  # Verificador de usuario autenticado
-    │   └── roleGuard.js       # Verificador de rol admin
-    ├── utils/
-    │   └── urlValidator.js    # Validador de URLs con dominios, IPs, puertos y queries
-    └── routes/
-        ├── auth.js            # Sync de usuario SSO
-        ├── apps.js            # CRUD de aplicaciones y asignaciones
-        ├── users.js           # CRUD de usuarios y cambio de roles
-        ├── groups.js          # CRUD de grupos corporativos y miembros
-        ├── stats.js           # Registro de clics y reportes
-        └── audit.js           # Consulta de auditoría inmutable
+    ├── middlewares/           # authMiddleware.js, roleGuard.js
+    ├── utils/                 # urlValidator.js
+    └── routes/                # auth.js, apps.js, users.js, groups.js, stats.js, audit.js, userConfig.js
 ```
+
+### Configuración de Netlify Functions (`netlify.toml`)
+Netlify compila automáticamente el cliente y mapea las rutas API:
+- **Build Command:** `npm run build --prefix client`
+- **Publish Directory:** `client/dist`
+- **Functions Directory:** `server`
+- **Redirects:**
+  - `/api/*` -> `/.netlify/functions/netlify-handler/api/:splat` (200)
+  - `/*` -> `/index.html` (200)
 
 ---
 
@@ -116,85 +113,32 @@ El archivo [`schema.sql`](file:///c:/Users/gabrielt/Documents/Proyectos/DonYeyoM
 ### Tablas:
 1. `usuarios`: personal corporativo sincronizado por Microsoft SSO.
 2. `grupos`: grupos de trabajo (ej. *Planta*, *Dirección*, *Logística*).
-3. `usuarios_grupos`: relación de miembros en cada grupo.
-4. `aplicaciones`: catálogo de sistemas con nombre, descripción, URL completa, icono y color.
+3. `usuarios_grupos`: relación N:M de miembros en cada grupo.
+4. `aplicaciones`: catálogo de sistemas con `icono` en `MEDIUMTEXT NULL` (soporta PNG base64 y flat icons).
 5. `asignaciones_usuarios`: asignación individual de una app a un usuario.
 6. `asignaciones_grupos`: asignación colectiva de una app a un grupo.
 7. `auditoria`: **alimentada automáticamente mediante TRIGGERS** con `datos_anteriores` y `datos_nuevos` en JSON, operación (`INSERT`, `UPDATE`, `DELETE`) y `usuario_responsable`.
 8. `estadisticas_accesos`: registros de clics y visitas a cada enlace (**sin triggers de auditoría** por diseño).
-
-### Triggers automáticos incluidos:
-- `trg_usuarios_insert`, `trg_usuarios_update`, `trg_usuarios_delete`
-- `trg_grupos_insert`, `trg_grupos_update`, `trg_grupos_delete`
-- `trg_usuarios_grupos_insert`, `trg_usuarios_grupos_delete`
-- `trg_aplicaciones_insert`, `trg_aplicaciones_update`, `trg_aplicaciones_delete`
-- `trg_asig_usuarios_insert`, `trg_asig_usuarios_delete`
-- `trg_asig_grupos_insert`, `trg_asig_grupos_delete`
+9. `usuario_tablero_config`: almacena la personalización de secciones, titulares y orden del tablero por cada usuario en formato JSON.
 
 ---
 
-## ⚙️ Variables de Entorno
+## 🚀 Ejecución en Entorno Local (Independiente)
 
-Toda la configuración se encuentra parametrizada sin ningún tipo de hardcodeo. Revisa los archivos `.env.template` en la raíz, en `client/` y en `server/`:
+Cada subproyecto (`client` y `server`) cuenta con sus propios `node_modules` y scripts independientes, por lo que **no se requiere `node_modules` en la raíz**:
 
-| Variable | Descripción | Valor por Defecto |
-| :--- | :--- | :--- |
-| `PORT` | Puerto de escucha del backend Express | `3001` |
-| `HOST` | Host del servidor backend | `0.0.0.0` |
-| `DB_HOST` | Host de la base de datos MySQL | `localhost` |
-| `DB_PORT` | Puerto del motor MySQL | `3306` |
-| `DB_USER` | Usuario de MySQL | `root` |
-| `DB_PASSWORD` | Contraseña de MySQL | `root` |
-| `DB_NAME` | Nombre de la base de datos | `dy_manager` |
-| `CORS_ORIGIN` | Origen frontend permitido para peticiones | `http://localhost:5173` |
-| `DEFAULT_ADMIN_EMAIL` | Email al que se le otorga rol admin automáticamente | `admin@donyeyo.com.ar` |
-| `VITE_API_URL` | URL base de la API consumida por el frontend | `http://localhost:3001/api` |
-| `VITE_AZURE_AD_CLIENT_ID`| Client ID (Application ID) de Azure AD / Entra ID | `00000000-0000-...` |
-| `VITE_AZURE_AD_TENANT_ID`| Tenant ID del directorio de Microsoft Entra | `common` |
-| `VITE_MOCK_AUTH` | Habilita el bypass de autenticación para desarrollo local | `true` |
-| `VITE_MOCK_AUTH_EMAIL` | Email utilizado durante el modo Mock | `admin@donyeyo.com.ar` |
-
----
-
-## 🚀 Puesta en Marcha (Instalación Rápida)
-
-### 1. Clonar el repositorio y configurar variables:
+### 1. Iniciar Backend (Terminal 1):
 ```bash
-# Copiar las plantillas a los archivos .env
-cp .env.template .env
-cp client/.env.template client/.env
-cp server/.env.template server/.env
-```
-
-### 2. Inicializar la base de datos MySQL:
-Ejecuta el script SQL en tu cliente de base de datos preferido (DBeaver, MySQL Workbench o terminal):
-```bash
-mysql -u root -p < schema.sql
-```
-
-### 3. Instalar dependencias de todo el monorepo:
-Desde la raíz del proyecto:
-```bash
-npm run install-all
-```
-
-### 4. Iniciar en entorno de desarrollo con Hot-Reload:
-```bash
+cd server
+npm install   # (solo la primera vez)
 npm run dev
 ```
-Este comando ejecutará concurrentemente:
-- **Backend Express:** en `http://localhost:3001` (con recarga automática mediante `nodemon`).
-- **Frontend Vite:** en `http://localhost:5173` (con Fast Refresh instantáneo).
+Escuchará en `http://localhost:3001`.
 
----
-
-## 🔐 Configuración de Microsoft Entra ID (Azure AD SSO)
-
-Para producción o pruebas con el inquilino real de Microsoft:
-1. Ingresa a [Microsoft Entra Admin Center](https://entra.microsoft.com/).
-2. Ve a **Aplicaciones > Registro de aplicaciones > Nuevo registro**.
-3. Registra el nombre de la app (ej. `Don Yeyo Manager`).
-4. Tipo de cuenta: *Solo las cuentas de este directorio organizativo (inquilino único)* o *Multiinquilino*.
-5. URI de redirección: Plataforma **SPA (Single Page Application)** con valor `http://localhost:5173` (y la URL de producción correspondiente).
-6. Copia el **Id. de aplicación (cliente)** y el **Id. de directorio (inquilino)** en los archivos `.env` (`VITE_AZURE_AD_CLIENT_ID` y `VITE_AZURE_AD_TENANT_ID`).
-7. Desactiva el modo mock en `.env`: `VITE_MOCK_AUTH=false`.
+### 2. Iniciar Frontend (Terminal 2):
+```bash
+cd client
+npm install   # (solo la primera vez)
+npm run dev
+```
+Abrirá el portal PWA en `http://localhost:5173`.

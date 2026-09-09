@@ -94,7 +94,7 @@ export const Header = ({ onToggleDrawer }) => {
                   color: 'var(--text-muted)'
                 }}
               >
-                v1.0.0
+                v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}
               </span>
             </div>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 500 }}>

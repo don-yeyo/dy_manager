@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, 
   Edit, 
@@ -12,7 +12,9 @@ import {
   Layers,
   Palette,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { AppsService, UsersService, GroupsService } from '../services/api';
@@ -38,6 +40,7 @@ export const AdminApps = () => {
   // Estados para Modal App (Crear / Editar)
   const [isAppModalOpen, setIsAppModalOpen] = useState(false);
   const [editingApp, setEditingApp] = useState(null);
+  const [iconMode, setIconMode] = useState('flat'); // 'flat' | 'custom' | 'none'
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
@@ -50,6 +53,7 @@ export const AdminApps = () => {
   });
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Estados para Modal de Asignaciones
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -78,6 +82,7 @@ export const AdminApps = () => {
 
   const openCreateModal = () => {
     setEditingApp(null);
+    setIconMode('flat');
     setFormData({
       nombre: '',
       descripcion: '',
@@ -94,11 +99,20 @@ export const AdminApps = () => {
 
   const openEditModal = (app) => {
     setEditingApp(app);
+    let mode = 'none';
+    if (app.icono) {
+      if (app.icono.startsWith('data:image/') || app.icono.startsWith('http')) {
+        mode = 'custom';
+      } else {
+        mode = 'flat';
+      }
+    }
+    setIconMode(mode);
     setFormData({
       nombre: app.nombre,
       descripcion: app.descripcion || '',
       url: app.url,
-      icono: app.icono || 'Globe',
+      icono: app.icono || '',
       categoria: app.categoria || 'General',
       color: app.color || '#0d2c5c',
       orden: app.orden || 0,
@@ -108,22 +122,73 @@ export const AdminApps = () => {
     setIsAppModalOpen(true);
   };
 
+  // Subida de imagen PNG y compresión a canvas 128x128 en Base64 para MySQL
+  const handleImageFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setFormError('El archivo debe ser una imagen (PNG, SVG, JPG).');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 128;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const base64Data = canvas.toDataURL('image/png');
+
+        setFormData(prev => ({ ...prev, icono: base64Data }));
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveApp = async (e) => {
     e.preventDefault();
     setFormError(null);
 
-    // Validación local básica de URL
+    // Validación básica de URL
     if (!formData.url.startsWith('http://') && !formData.url.startsWith('https://')) {
       setFormError('La URL debe comenzar con http:// o https://');
       return;
     }
 
+    // Ajuste de icono según iconMode
+    let finalIcon = formData.icono;
+    if (iconMode === 'none') {
+      finalIcon = null;
+    }
+
     try {
       setSubmitting(true);
+      const payload = { ...formData, icono: finalIcon };
       if (editingApp) {
-        await AppsService.update(editingApp.id, formData);
+        await AppsService.update(editingApp.id, payload);
       } else {
-        await AppsService.create(formData);
+        await AppsService.create(payload);
       }
       setIsAppModalOpen(false);
       fetchApps();
@@ -202,7 +267,7 @@ export const AdminApps = () => {
             Gestor de <span style={{ color: 'var(--secondary)' }}>Aplicaciones</span>
           </h1>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Administra el catálogo de sistemas corporativos y asigna sus permisos por usuario o grupo.
+            Administra el catálogo de sistemas corporativos, sube iconos personalizados o flat y asigna permisos.
           </p>
         </div>
 
@@ -261,24 +326,33 @@ export const AdminApps = () => {
               </tr>
             ) : (
               filteredApps.map((app) => {
-                const IconComp = Icons[app.icono] || Icons.Globe;
+                const isCustomImage = app.icono && (app.icono.startsWith('data:image/') || app.icono.startsWith('http'));
+                const LucideComp = app.icono && Icons[app.icono] ? Icons[app.icono] : null;
+
                 return (
                   <tr key={app.id}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div
                           style={{
-                            width: '38px',
-                            height: '38px',
+                            width: '40px',
+                            height: '40px',
                             borderRadius: '10px',
                             background: `${app.color || '#0d2c5c'}15`,
                             color: app.color || 'var(--primary)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            overflow: 'hidden'
                           }}
                         >
-                          <IconComp size={20} />
+                          {isCustomImage ? (
+                            <img src={app.icono} alt="" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
+                          ) : LucideComp ? (
+                            <LucideComp size={20} />
+                          ) : (
+                            <span style={{ fontWeight: 800, fontSize: '1rem' }}>{app.nombre[0]}</span>
+                          )}
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, color: 'var(--text)' }}>{app.nombre}</div>
@@ -374,7 +448,7 @@ export const AdminApps = () => {
         isOpen={isAppModalOpen}
         onClose={() => setIsAppModalOpen(false)}
         title={editingApp ? `Editar Aplicación: ${editingApp.nombre}` : 'Nueva Aplicación'}
-        maxWidth="600px"
+        maxWidth="640px"
       >
         <form onSubmit={handleSaveApp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {formError && (
@@ -432,38 +506,141 @@ export const AdminApps = () => {
             />
           </div>
 
-          {/* Selector de Icono */}
+          {/* Selector de Modo de Icono (Opcional, Flat o PNG Base64) */}
           <div>
             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginBottom: '8px', display: 'block' }}>
-              Icono Representativo
+              Icono de la Aplicación (Opcional - Guardado en Base de Datos)
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)', gap: '8px' }}>
-              {AVAILABLE_ICONS.map((iconName) => {
-                const Comp = Icons[iconName] || Icons.Globe;
-                const isSelected = formData.icono === iconName;
-                return (
-                  <button
-                    key={iconName}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, icono: iconName })}
-                    style={{
-                      padding: '8px',
-                      borderRadius: '8px',
-                      border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
-                      background: isSelected ? 'var(--btn-primary-bg)' : 'var(--surface)',
-                      color: isSelected ? 'var(--btn-primary-text)' : 'var(--text)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                    title={iconName}
-                  >
-                    <Comp size={18} />
-                  </button>
-                );
-              })}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIconMode('flat');
+                  if (!formData.icono || formData.icono.startsWith('data:')) {
+                    setFormData({ ...formData, icono: 'Globe' });
+                  }
+                }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: `1px solid ${iconMode === 'flat' ? 'var(--primary)' : 'var(--border)'}`,
+                  background: iconMode === 'flat' ? 'var(--btn-primary-bg)' : 'transparent',
+                  color: iconMode === 'flat' ? 'var(--btn-primary-text)' : 'var(--text)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Icono Flat del Sistema
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIconMode('custom');
+                }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: `1px solid ${iconMode === 'custom' ? 'var(--primary)' : 'var(--border)'}`,
+                  background: iconMode === 'custom' ? 'var(--btn-primary-bg)' : 'transparent',
+                  color: iconMode === 'custom' ? 'var(--btn-primary-text)' : 'var(--text)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Upload size={14} />
+                <span>Subir PNG / Imagen</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIconMode('none');
+                  setFormData({ ...formData, icono: '' });
+                }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: `1px solid ${iconMode === 'none' ? 'var(--primary)' : 'var(--border)'}`,
+                  background: iconMode === 'none' ? 'var(--btn-primary-bg)' : 'transparent',
+                  color: iconMode === 'none' ? 'var(--btn-primary-text)' : 'var(--text)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Sin Icono
+              </button>
             </div>
+
+            {/* Subida personalizada de PNG */}
+            {iconMode === 'custom' && (
+              <div style={{ padding: '12px', border: '1px dashed var(--border)', borderRadius: 'var(--radius)', textAlign: 'center' }}>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml"
+                  ref={fileInputRef}
+                  onChange={handleImageFileChange}
+                  style={{ display: 'none' }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={Upload}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Seleccionar archivo PNG
+                </Button>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '6px' }}>
+                  Se redimensionará y guardará directamente en la base de datos MySQL como Base64.
+                </span>
+
+                {formData.icono && formData.icono.startsWith('data:') && (
+                  <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Vista Previa:</span>
+                    <img
+                      src={formData.icono}
+                      alt="Preview"
+                      style={{ width: '36px', height: '36px', objectFit: 'contain', background: 'var(--surface-hover)', borderRadius: '8px', padding: '4px' }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Grilla Flat Icons */}
+            {iconMode === 'flat' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)', gap: '8px' }}>
+                {AVAILABLE_ICONS.map((iconName) => {
+                  const Comp = Icons[iconName] || Icons.Globe;
+                  const isSelected = formData.icono === iconName;
+                  return (
+                    <button
+                      key={iconName}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, icono: iconName })}
+                      style={{
+                        padding: '8px',
+                        borderRadius: '8px',
+                        border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
+                        background: isSelected ? 'var(--btn-primary-bg)' : 'var(--surface)',
+                        color: isSelected ? 'var(--btn-primary-text)' : 'var(--text)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title={iconName}
+                    >
+                      <Comp size={18} />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Selector de Color */}

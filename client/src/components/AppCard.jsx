@@ -6,8 +6,30 @@ import { StatsService } from '../services/api';
 export const AppCard = ({ app }) => {
   const [opening, setOpening] = useState(false);
 
-  // Resolver el componente de icono desde Lucide
-  const IconComponent = Icons[app.icono] || Icons.Globe;
+  // Determinar cómo renderizar el icono (imagen base64, flat icon Lucide o fallback opcional)
+  const renderIcon = () => {
+    if (app.icono && (app.icono.startsWith('data:image/') || app.icono.startsWith('http'))) {
+      return (
+        <img
+          src={app.icono}
+          alt={app.nombre}
+          style={{ width: '28px', height: '28px', objectFit: 'contain', borderRadius: '4px' }}
+        />
+      );
+    }
+
+    if (app.icono && Icons[app.icono]) {
+      const LucideIcon = Icons[app.icono];
+      return <LucideIcon size={24} />;
+    }
+
+    // Fallback elegante cuando no hay icono configurado (opcional)
+    return (
+      <span style={{ fontWeight: 800, fontSize: '1.2rem', color: app.color || 'var(--primary)' }}>
+        {app.nombre ? app.nombre[0].toUpperCase() : 'DY'}
+      </span>
+    );
+  };
 
   // Analizar la URL para mostrar badges informativos
   let urlInfo = { isHttps: false, hasPort: false, host: '' };
@@ -65,7 +87,7 @@ export const AppCard = ({ app }) => {
               color: app.color || 'var(--primary)'
             }}
           >
-            <IconComponent size={24} />
+            {renderIcon()}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>

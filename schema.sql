@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS `aplicaciones` (
   `nombre` VARCHAR(100) NOT NULL,
   `descripcion` TEXT NULL,
   `url` VARCHAR(500) NOT NULL,
-  `icono` VARCHAR(50) NOT NULL DEFAULT 'Globe',
+  `icono` MEDIUMTEXT NULL,
   `categoria` VARCHAR(50) NOT NULL DEFAULT 'General',
   `color` VARCHAR(25) NOT NULL DEFAULT '#0d2c5c',
   `orden` INT NOT NULL DEFAULT 0,
@@ -135,6 +135,19 @@ CREATE TABLE IF NOT EXISTS `estadisticas_accesos` (
   INDEX `idx_stats_fecha` (`fecha_acceso`),
   CONSTRAINT `fk_ea_app` FOREIGN KEY (`aplicacion_id`) REFERENCES `aplicaciones` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_ea_user` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ------------------------------------------------------------------------
+-- 9. TABLA: usuario_tablero_config
+-- Guarda la personalización de cada usuario: secciones con titulares y orden
+-- Se sincroniza en todos los dispositivos desde los que ingrese el usuario.
+-- ------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `usuario_tablero_config` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `usuario_id` INT NOT NULL UNIQUE,
+  `configuracion` JSON NOT NULL,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_utc_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ========================================================================
