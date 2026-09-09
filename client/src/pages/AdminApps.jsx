@@ -215,6 +215,9 @@ export const AdminApps = () => {
   };
 
   const openAssignModal = async (app) => {
+    if (app.requiere_seguridad === 0) {
+      return;
+    }
     setSelectedAppForAssign(app);
     setIsAssignModalOpen(true);
     setLoadingAssignments(true);
@@ -446,15 +449,17 @@ export const AdminApps = () => {
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', gap: '4px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          icon={Users}
-                          onClick={() => openAssignModal(app)}
-                          title="Gestionar Asignaciones"
-                        >
-                          Asignar
-                        </Button>
+                        {app.requiere_seguridad !== 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            icon={Users}
+                            onClick={() => openAssignModal(app)}
+                            title="Gestionar Asignaciones"
+                          >
+                            Asignar
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
