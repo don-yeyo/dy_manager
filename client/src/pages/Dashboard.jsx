@@ -346,8 +346,8 @@ export const Dashboard = () => {
                     <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-muted)' }}>
                       Otras Aplicaciones
                     </h2>
-                    <span className="badge" style={{ background: 'var(--surface-hover)', fontSize: '0.72rem' }}>
-                      {unclassifiedApps.length}
+                    <span className="badge badge-primary" style={{ fontSize: '0.72rem' }}>
+                      {unclassifiedApps.length} {unclassifiedApps.length === 1 ? 'app' : 'apps'}
                     </span>
                   </div>
 
