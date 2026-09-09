@@ -54,16 +54,17 @@ const statsRoutes = require('./routes/stats');
 const auditRoutes = require('./routes/audit');
 const userConfigRoutes = require('./routes/userConfig');
 
-app.use('/api/auth', authRoutes);
-app.use('/api/apps', appsRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/groups', groupsRoutes);
-app.use('/api/stats', statsRoutes);
-app.use('/api/audit', auditRoutes);
-app.use('/api/user-config', userConfigRoutes);
+const apiRouter = express.Router();
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/apps', appsRoutes);
+apiRouter.use('/users', usersRoutes);
+apiRouter.use('/groups', groupsRoutes);
+apiRouter.use('/stats', statsRoutes);
+apiRouter.use('/audit', auditRoutes);
+apiRouter.use('/user-config', userConfigRoutes);
 
 // Healthcheck
-app.get('/api/health', (req, res) => {
+apiRouter.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     system: 'Don Yeyo Manager API',
@@ -71,6 +72,10 @@ app.get('/api/health', (req, res) => {
     uptime: process.uptime()
   });
 });
+
+// Montar para desarrollo local (/api/...) y Netlify Functions (/:splat o /api/:splat)
+app.use('/api', apiRouter);
+app.use('/', apiRouter);
 
 // Manejador 404
 app.use('/api/*', (req, res) => {
