@@ -1,12 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutGrid, 
-  Layers, 
-  Users, 
-  FileText, 
-  BarChart3, 
-  X, 
+import {
+  LayoutGrid,
+  Layers,
+  Users,
+  FileText,
+  BarChart3,
+  X,
   ShieldAlert,
   Building2
 } from 'lucide-react';
@@ -157,7 +157,7 @@ export const Drawer = ({ isOpen, onClose }) => {
 
               <NavLink to="/admin/audit" style={navItemStyle} onClick={onClose}>
                 <FileText size={18} />
-                <span>Auditoría (Triggers)</span>
+                <span>Auditoría</span>
               </NavLink>
 
               <NavLink to="/admin/stats" style={navItemStyle} onClick={onClose}>

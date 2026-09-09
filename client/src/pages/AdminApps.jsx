@@ -320,16 +320,16 @@ export const AdminApps = () => {
 
       {/* Tabla de Aplicaciones */}
       <div className="table-container">
-        <table className="dy-table">
+        <table className="dy-table" style={{ width: '100%', tableLayout: 'auto' }}>
           <thead>
             <tr>
-              <th>Aplicación</th>
-              <th>Categoría</th>
-              <th>Enlace Destino (URL)</th>
-              <th>Asignaciones</th>
-              <th>Accesos</th>
-              <th>Estado</th>
-              <th style={{ textAlign: 'right' }}>Acciones</th>
+              <th style={{ minWidth: '220px', width: '30%' }}>Aplicación</th>
+              <th style={{ width: '100px' }}>Categoría</th>
+              <th style={{ width: '180px' }}>Enlace Destino (URL)</th>
+              <th style={{ width: '160px' }}>Asignaciones</th>
+              <th style={{ width: '85px' }}>Accesos</th>
+              <th style={{ width: '90px' }}>Estado</th>
+              <th style={{ width: '140px', textAlign: 'right' }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -354,12 +354,12 @@ export const AdminApps = () => {
                 return (
                   <tr key={app.id}>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div
                           style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '12px',
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '10px',
                             background: `linear-gradient(135deg, ${appColor}18 0%, ${appColor}32 100%)`,
                             border: `2px solid ${appColor}`,
                             color: appColor,
@@ -372,52 +372,53 @@ export const AdminApps = () => {
                           }}
                         >
                           {isCustomImage ? (
-                            <img src={app.icono} alt="" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+                            <img src={app.icono} alt="" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
                           ) : LucideComp ? (
-                            <LucideComp size={24} />
+                            <LucideComp size={20} />
                           ) : (
-                            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: appColor }}>{app.nombre[0].toUpperCase()}</span>
+                            <span style={{ fontWeight: 800, fontSize: '1rem', color: appColor }}>{app.nombre[0].toUpperCase()}</span>
                           )}
                         </div>
-                        <div>
-                          <div style={{ fontWeight: 700, color: 'var(--text)' }}>{app.nombre}</div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Orden: {app.orden}</div>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontWeight: 700, color: 'var(--text)', lineHeight: 1.25 }}>{app.nombre}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Orden: {app.orden}</div>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <span className="badge badge-primary">{app.categoria}</span>
+                      <span className="badge badge-primary" style={{ whiteSpace: 'nowrap' }}>{app.categoria}</span>
                     </td>
                     <td>
                       <a
                         href={app.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        title={app.url}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '6px',
+                          gap: '4px',
                           color: 'var(--primary)',
                           textDecoration: 'none',
-                          fontSize: '0.82rem',
+                          fontSize: '0.8rem',
                           fontWeight: 500,
-                          maxWidth: '260px',
+                          maxWidth: '180px',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        <span>{app.url}</span>
-                        <ExternalLink size={12} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{app.url}</span>
+                        <ExternalLink size={11} style={{ flexShrink: 0 }} />
                       </a>
                     </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
+                    <td>
                       {app.requiere_seguridad === 0 ? (
                         <span className="badge badge-success" style={{ whiteSpace: 'nowrap' }}>
                           Pública (Todos)
                         </span>
                       ) : (
-                        <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
                           <span className="badge badge-primary" style={{ whiteSpace: 'nowrap' }}>
                             {app.total_usuarios || 0} usuarios
                           </span>
@@ -434,17 +435,17 @@ export const AdminApps = () => {
                     </td>
                     <td>
                       {app.activo ? (
-                        <span className="badge badge-success">
-                          <CheckCircle2 size={12} /> Activo
+                        <span className="badge badge-success" style={{ whiteSpace: 'nowrap' }}>
+                          <CheckCircle2 size={11} /> Activo
                         </span>
                       ) : (
-                        <span className="badge badge-danger">
-                          <XCircle size={12} /> Inactivo
+                        <span className="badge badge-danger" style={{ whiteSpace: 'nowrap' }}>
+                          <XCircle size={11} /> Inactivo
                         </span>
                       )}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: '6px' }}>
+                      <div style={{ display: 'inline-flex', gap: '4px', justifyContent: 'flex-end', alignItems: 'center' }}>
                         <Button
                           variant="outline"
                           size="sm"
