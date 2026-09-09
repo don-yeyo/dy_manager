@@ -349,6 +349,7 @@ export const AdminApps = () => {
               filteredApps.map((app) => {
                 const isCustomImage = app.icono && (app.icono.startsWith('data:image/') || app.icono.startsWith('http'));
                 const LucideComp = app.icono && Icons[app.icono] ? Icons[app.icono] : null;
+                const appColor = app.color && app.color.trim().startsWith('#') ? app.color.trim() : '#0d2c5c';
 
                 return (
                   <tr key={app.id}>
@@ -356,23 +357,26 @@ export const AdminApps = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div
                           style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '10px',
-                            background: `${app.color || '#0d2c5c'}15`,
-                            color: app.color || 'var(--primary)',
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            background: `linear-gradient(135deg, ${appColor}18 0%, ${appColor}32 100%)`,
+                            border: `2px solid ${appColor}`,
+                            color: appColor,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            boxShadow: `0 2px 6px ${appColor}20`,
+                            flexShrink: 0
                           }}
                         >
                           {isCustomImage ? (
-                            <img src={app.icono} alt="" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
+                            <img src={app.icono} alt="" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
                           ) : LucideComp ? (
-                            <LucideComp size={20} />
+                            <LucideComp size={24} />
                           ) : (
-                            <span style={{ fontWeight: 800, fontSize: '1rem' }}>{app.nombre[0]}</span>
+                            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: appColor }}>{app.nombre[0].toUpperCase()}</span>
                           )}
                         </div>
                         <div>
@@ -407,14 +411,24 @@ export const AdminApps = () => {
                         <ExternalLink size={12} />
                       </a>
                     </td>
-                    <td>
-                      <div style={{ fontSize: '0.82rem' }}>
-                        <span style={{ fontWeight: 600 }}>{app.total_usuarios || 0}</span> usuarios &bull;{' '}
-                        <span style={{ fontWeight: 600 }}>{app.total_grupos || 0}</span> grupos
-                      </div>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {app.requiere_seguridad === 0 ? (
+                        <span className="badge badge-success" style={{ whiteSpace: 'nowrap' }}>
+                          Pública (Todos)
+                        </span>
+                      ) : (
+                        <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                          <span className="badge badge-primary" style={{ whiteSpace: 'nowrap' }}>
+                            {app.total_usuarios || 0} usuarios
+                          </span>
+                          <span className="badge" style={{ background: 'var(--surface-hover)', whiteSpace: 'nowrap' }}>
+                            {app.total_grupos || 0} grupos
+                          </span>
+                        </div>
+                      )}
                     </td>
-                    <td>
-                      <span className="badge badge-warning" style={{ fontWeight: 700 }}>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <span className="badge badge-warning" style={{ fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-block' }}>
                         {app.total_accesos || 0} clics
                       </span>
                     </td>

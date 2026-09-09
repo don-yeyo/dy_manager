@@ -133,7 +133,7 @@ router.get('/:id/details', authMiddleware, requireAdmin, async (req, res) => {
     `, [groupId]);
 
     const [apps] = await pool.query(`
-      SELECT a.id, a.nombre, a.url, a.icono, a.categoria, ag.created_at as asignado_el, ag.asignado_por
+      SELECT a.id, a.nombre, a.url, a.icono, a.categoria, ag.created_at as asignado_el, ag.asignado_por, ag.tipo_permiso
       FROM aplicaciones a
       INNER JOIN asignaciones_grupos ag ON ag.aplicacion_id = a.id
       WHERE ag.grupo_id = ?
@@ -180,23 +180,34 @@ router.post('/:id/members', authMiddleware, requireAdmin, async (req, res) => {
 /**
  * POST /api/groups/:id/apps
  * (Admin Only) Actualiza las aplicaciones asignadas a este grupo
+ * Soporta appAssignments ([{ id, tipo_permiso }]) o appIds ([id1, id2...])
  */
 router.post('/:id/apps', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const groupId = parseInt(req.params.id, 10);
-    const { appIds } = req.body;
-
-    if (!Array.isArray(appIds)) {
-      return res.status(400).json({ error: 'appIds debe ser un array' });
-    }
+    const { appIds, appAssignments } = req.body;
 
     await executeWithUser(req.user.email, async (conn) => {
       await conn.query('DELETE FROM asignaciones_grupos WHERE grupo_id = ?', [groupId]);
-      for (const appId of appIds) {
-        await conn.query(
-          'INSERT INTO asignaciones_grupos (grupo_id, aplicacion_id, asignado_por) VALUES (?, ?, ?)',
-          [groupId, appId, req.user.email]
-        );
+
+      if (Array.isArray(appAssignments)) {
+        for (const item of appAssignments) {
+          const appId = typeof item === 'object' ? item.id : item;
+          const tipo = (typeof item === 'object' && item.tipo_permiso === 'solo_ver') ? 'solo_ver' : 'acceso';
+          if (appId) {
+            await conn.query(
+              'INSERT INTO asignaciones_grupos (grupo_id, aplicacion_id, asignado_por, tipo_permiso) VALUES (?, ?, ?, ?)',
+              [groupId, appId, req.user.email, tipo]
+            );
+          }
+        }
+      } else if (Array.isArray(appIds)) {
+        for (const appId of appIds) {
+          await conn.query(
+            'INSERT INTO asignaciones_grupos (grupo_id, aplicacion_id, asignado_por, tipo_permiso) VALUES (?, ?, ?, ?)',
+            [groupId, appId, req.user.email, 'acceso']
+          );
+        }
       }
     });
 

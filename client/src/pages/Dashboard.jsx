@@ -237,19 +237,7 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Interruptor de vista para Administrador en Desktop */}
-        {isAdmin() && (
-          <div className="dashboard-header-desktop" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '16px' }}>
-            <Button
-              variant={showAllAsAdmin ? 'secondary' : 'outline'}
-              size="sm"
-              icon={Shield}
-              onClick={() => setShowAllAsAdmin(prev => !prev)}
-            >
-              {showAllAsAdmin ? 'Todas las Apps (Admin)' : 'Mis Asignaciones'}
-            </Button>
-          </div>
-        )}
+
 
         {/* Estados: Loading o Error */}
         {loading ? (

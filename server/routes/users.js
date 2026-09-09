@@ -157,7 +157,7 @@ router.get('/:id/apps', authMiddleware, requireAdmin, async (req, res) => {
     const userId = parseInt(req.params.id, 10);
 
     const [rows] = await pool.query(`
-      SELECT a.id, a.nombre, a.url, a.icono, a.categoria, au.created_at as asignado_el, au.asignado_por
+      SELECT a.id, a.nombre, a.url, a.icono, a.categoria, au.created_at as asignado_el, au.asignado_por, au.tipo_permiso
       FROM aplicaciones a
       INNER JOIN asignaciones_usuarios au ON au.aplicacion_id = a.id
       WHERE au.usuario_id = ?
@@ -173,23 +173,34 @@ router.get('/:id/apps', authMiddleware, requireAdmin, async (req, res) => {
 /**
  * POST /api/users/:id/apps
  * (Admin Only) Asigna o reemplaza aplicaciones asignadas directamente a un usuario
+ * Soporta appAssignments ([{ id, tipo_permiso }]) o appIds ([id1, id2...])
  */
 router.post('/:id/apps', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const userId = parseInt(req.params.id, 10);
-    const { appIds } = req.body; // Array de IDs de aplicaciones
-
-    if (!Array.isArray(appIds)) {
-      return res.status(400).json({ error: 'appIds debe ser un array' });
-    }
+    const { appIds, appAssignments } = req.body;
 
     await executeWithUser(req.user.email, async (conn) => {
       await conn.query('DELETE FROM asignaciones_usuarios WHERE usuario_id = ?', [userId]);
-      for (const appId of appIds) {
-        await conn.query(
-          'INSERT INTO asignaciones_usuarios (usuario_id, aplicacion_id, asignado_por) VALUES (?, ?, ?)',
-          [userId, appId, req.user.email]
-        );
+
+      if (Array.isArray(appAssignments)) {
+        for (const item of appAssignments) {
+          const appId = typeof item === 'object' ? item.id : item;
+          const tipo = (typeof item === 'object' && item.tipo_permiso === 'solo_ver') ? 'solo_ver' : 'acceso';
+          if (appId) {
+            await conn.query(
+              'INSERT INTO asignaciones_usuarios (usuario_id, aplicacion_id, asignado_por, tipo_permiso) VALUES (?, ?, ?, ?)',
+              [userId, appId, req.user.email, tipo]
+            );
+          }
+        }
+      } else if (Array.isArray(appIds)) {
+        for (const appId of appIds) {
+          await conn.query(
+            'INSERT INTO asignaciones_usuarios (usuario_id, aplicacion_id, asignado_por, tipo_permiso) VALUES (?, ?, ?, ?)',
+            [userId, appId, req.user.email, 'acceso']
+          );
+        }
       }
     });
 
