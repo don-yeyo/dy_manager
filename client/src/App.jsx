@@ -8,6 +8,7 @@ import { AdminApps } from './pages/AdminApps';
 import { AdminUsersGroups } from './pages/AdminUsersGroups';
 import { AuditLog } from './pages/AuditLog';
 import { StatsDashboard } from './pages/StatsDashboard';
+import { DbConnectionGuard } from './components/DbConnectionGuard';
 import { RefreshCw } from 'lucide-react';
 
 // Guard de Autenticación
@@ -57,6 +58,9 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      {/* Detector y guardia de pérdida de conexión a base de datos */}
+      <DbConnectionGuard />
+
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
 

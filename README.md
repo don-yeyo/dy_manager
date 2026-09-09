@@ -57,6 +57,12 @@ Portal y Hub centralizado para nuclear el acceso a todas las herramientas y sist
    - Vanilla CSS modular con variables CSS (`--dy-blue: #0d2c5c`, `--dy-red: #e40521`).
    - Efectos Glassmorphic con `backdrop-filter`, tema Claro y Oscuro persistido en el navegador, Header corporativo y Drawer retráctil con RBAC.
 
+10. **Detector de Pérdida de Conexión a Base de Datos (`DbConnectionGuard`):**
+    - Idéntico al estándar implementado en `dy_shigma`.
+    - Monitorea periódicamente el estado de MySQL vía polling cada `VITE_DB_CONNECTION_CHECK_INTERVAL` segundos (por defecto 90s) contra el endpoint `/api/system/db-status`.
+    - Captura inmediatamente cualquier error 500 o fallo de red en peticiones Axios mediante un CustomEvent global (`api-request-failed`), verificando al instante el estado de la BD.
+    - Despliega un Modal crítico no cerrable con aviso visual y botón de reintento ("Reintentar Conexión"). Al restablecer la comunicación, recarga la aplicación automáticamente para evitar inconsistencias de estado.
+
 ---
 
 ## 🏛️ Arquitectura y Despliegue en Netlify

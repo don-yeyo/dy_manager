@@ -26,7 +26,7 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-// Interceptor de respuesta para capturar expiración o desactivación
+// Interceptor de respuesta para capturar expiración o desactivación y fallos de conexión/500
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -35,6 +35,17 @@ api.interceptors.response.use(
       localStorage.removeItem('dy_current_user');
       window.location.href = '/login';
     }
+
+    // Notificar al guardián de base de datos (DbConnectionGuard) ignorando llamadas a su propio endpoint
+    if (error.config && !error.config.url?.includes('/system/db-status')) {
+      const eventDetail = {
+        status: error.response?.status,
+        message: error.message,
+        data: error.response?.data
+      };
+      window.dispatchEvent(new CustomEvent('api-request-failed', { detail: eventDetail }));
+    }
+
     return Promise.reject(error);
   }
 );
@@ -87,6 +98,11 @@ export const AuditService = {
 export const UserConfigService = {
   getBoardConfig: () => api.get('/user-config/board'),
   saveBoardConfig: (secciones) => api.put('/user-config/board', { secciones })
+};
+
+export const SystemService = {
+  getVersion: (v) => api.get(`/system/version${v ? `?v=${v}` : ''}`),
+  getDbStatus: () => api.get('/system/db-status')
 };
 
 export default api;

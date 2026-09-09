@@ -53,6 +53,7 @@ const groupsRoutes = require('./routes/groups');
 const statsRoutes = require('./routes/stats');
 const auditRoutes = require('./routes/audit');
 const userConfigRoutes = require('./routes/userConfig');
+const systemRoutes = require('./routes/system');
 
 const apiRouter = express.Router();
 apiRouter.use('/auth', authRoutes);
@@ -62,6 +63,7 @@ apiRouter.use('/groups', groupsRoutes);
 apiRouter.use('/stats', statsRoutes);
 apiRouter.use('/audit', auditRoutes);
 apiRouter.use('/user-config', userConfigRoutes);
+apiRouter.use('/system', systemRoutes);
 
 // Healthcheck
 apiRouter.get('/health', (req, res) => {
