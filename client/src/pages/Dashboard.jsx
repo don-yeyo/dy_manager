@@ -38,6 +38,11 @@ export const Dashboard = () => {
   const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
   const [tempSections, setTempSections] = useState([]);
   const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [unassignedFilter, setUnassignedFilter] = useState('');
+  const [selectedUnassignedAppIds, setSelectedUnassignedAppIds] = useState([]);
+  const [bulkTargetSection, setBulkTargetSection] = useState('');
+  const [selectedSectionAppIds, setSelectedSectionAppIds] = useState({}); // { [secId]: [appId1, appId2] }
+  const [sectionBulkTargets, setSectionBulkTargets] = useState({}); // { [secId]: targetValue }
   const [savingConfig, setSavingConfig] = useState(false);
 
   // Estados de Solicitud de Acceso por Email
@@ -105,19 +110,18 @@ export const Dashboard = () => {
 
   // Abrir modal de personalización
   const openCustomizeModal = () => {
-    // Si no tiene secciones creadas, inicializar con una sección por defecto con todas sus apps
+    // Si no tiene secciones creadas, inicializar vacío para que todas las apps aparezcan en "Otras Aplicaciones (Sin Agrupar)"
     if (customSections.length === 0) {
-      setTempSections([
-        {
-          id: 'sec_' + Date.now(),
-          titulo: 'Mis Herramientas',
-          appIds: apps.map(a => a.id)
-        }
-      ]);
+      setTempSections([]);
     } else {
       setTempSections(JSON.parse(JSON.stringify(customSections)));
     }
     setNewSectionTitle('');
+    setUnassignedFilter('');
+    setSelectedUnassignedAppIds([]);
+    setSelectedSectionAppIds({});
+    setSectionBulkTargets({});
+    setBulkTargetSection('');
     setIsCustomizeModalOpen(true);
   };
 
@@ -138,6 +142,16 @@ export const Dashboard = () => {
   // Eliminar sección
   const handleDeleteSection = (secId) => {
     setTempSections(tempSections.filter(s => s.id !== secId));
+    setSelectedSectionAppIds(prev => {
+      const copy = { ...prev };
+      delete copy[secId];
+      return copy;
+    });
+    setSectionBulkTargets(prev => {
+      const copy = { ...prev };
+      delete copy[secId];
+      return copy;
+    });
   };
 
   // Mover app hacia arriba o abajo en una sección
@@ -159,9 +173,147 @@ export const Dashboard = () => {
   const handleMoveAppToSection = (fromSecIndex, appIndex, toSecIndex) => {
     if (fromSecIndex === toSecIndex) return;
     const updated = [...tempSections];
-    const appId = updated[fromSecIndex].appIds.splice(appIndex, 1)[0];
+    const fromSec = updated[fromSecIndex];
+    const appId = fromSec.appIds.splice(appIndex, 1)[0];
     updated[toSecIndex].appIds.push(appId);
     setTempSections(updated);
+    setSelectedSectionAppIds(prev => ({
+      ...prev,
+      [fromSec.id]: (prev[fromSec.id] || []).filter(id => id !== appId)
+    }));
+  };
+
+  // Alternar selección individual en una sección
+  const handleToggleSelectInSection = (secId, appId) => {
+    setSelectedSectionAppIds(prev => {
+      const current = prev[secId] || [];
+      const updated = current.includes(appId)
+        ? current.filter(id => id !== appId)
+        : [...current, appId];
+      return { ...prev, [secId]: updated };
+    });
+  };
+
+  // Alternar selección de todas las apps de una sección
+  const handleToggleSelectAllInSection = (secId, appIds) => {
+    setSelectedSectionAppIds(prev => {
+      const current = prev[secId] || [];
+      const allSelected = appIds.length > 0 && appIds.every(id => current.includes(id));
+      return {
+        ...prev,
+        [secId]: allSelected ? [] : [...appIds]
+      };
+    });
+  };
+
+  // Mover selección masiva desde una sección a otra sección o desagrupar
+  const handleBulkMoveFromSection = (fromSecIndex, targetVal) => {
+    if (!targetVal) return;
+    const sec = tempSections[fromSecIndex];
+    if (!sec) return;
+    const selectedIds = selectedSectionAppIds[sec.id] || [];
+    if (selectedIds.length === 0) return;
+
+    const updated = [...tempSections];
+    const selectedSet = new Set(selectedIds);
+
+    // Remover las seleccionadas de la sección origen
+    updated[fromSecIndex].appIds = updated[fromSecIndex].appIds.filter(id => !selectedSet.has(id));
+
+    // Si el destino es otra sección (índice numérico)
+    if (targetVal !== '__unassign__') {
+      const toSecIndex = parseInt(targetVal, 10);
+      if (toSecIndex >= 0 && toSecIndex < updated.length && toSecIndex !== fromSecIndex) {
+        const destSet = new Set(updated[toSecIndex].appIds);
+        for (const id of selectedIds) {
+          if (!destSet.has(id)) {
+            updated[toSecIndex].appIds.push(id);
+            destSet.add(id);
+          }
+        }
+      }
+    }
+
+    setTempSections(updated);
+    setSelectedSectionAppIds(prev => ({ ...prev, [sec.id]: [] }));
+    setSectionBulkTargets(prev => ({ ...prev, [sec.id]: '' }));
+  };
+
+  // Asignar una app no agrupada a una sección
+  const handleAssignAppToSection = (appId, targetSecIndex) => {
+    if (targetSecIndex < 0 || targetSecIndex >= tempSections.length) return;
+    const updated = [...tempSections];
+    if (!updated[targetSecIndex].appIds.includes(appId)) {
+      updated[targetSecIndex].appIds.push(appId);
+    }
+    // Si estaba seleccionada, deseleccionarla
+    setSelectedUnassignedAppIds(prev => prev.filter(id => id !== appId));
+    setTempSections(updated);
+  };
+
+  // Asignar todas las apps no agrupadas a una sección
+  const handleAssignAllToSection = (targetSecIndex, appIdsToAssign) => {
+    if (targetSecIndex < 0 || targetSecIndex >= tempSections.length) return;
+    const updated = [...tempSections];
+    const currentSet = new Set(updated[targetSecIndex].appIds);
+    for (const id of appIdsToAssign) {
+      if (!currentSet.has(id)) {
+        updated[targetSecIndex].appIds.push(id);
+        currentSet.add(id);
+      }
+    }
+    setSelectedUnassignedAppIds([]);
+    setTempSections(updated);
+  };
+
+  // Alternar selección individual de app en Otras Aplicaciones
+  const handleToggleSelectUnassigned = (appId) => {
+    setSelectedUnassignedAppIds(prev =>
+      prev.includes(appId) ? prev.filter(id => id !== appId) : [...prev, appId]
+    );
+  };
+
+  // Alternar selección de todas las apps visibles en Otras Aplicaciones
+  const handleToggleSelectAllUnassigned = (appIds) => {
+    const allSelected = appIds.length > 0 && appIds.every(id => selectedUnassignedAppIds.includes(id));
+    if (allSelected) {
+      const setVisible = new Set(appIds);
+      setSelectedUnassignedAppIds(prev => prev.filter(id => !setVisible.has(id)));
+    } else {
+      setSelectedUnassignedAppIds(prev => Array.from(new Set([...prev, ...appIds])));
+    }
+  };
+
+  // Aplicar acción masiva de mover selección a una sección destino
+  const handleApplyBulkMoveUnassigned = (targetSecIdx) => {
+    if (targetSecIdx === '' || isNaN(targetSecIdx)) return;
+    const idx = parseInt(targetSecIdx, 10);
+    if (idx < 0 || idx >= tempSections.length) return;
+    if (selectedUnassignedAppIds.length === 0) return;
+
+    const updated = [...tempSections];
+    const currentSet = new Set(updated[idx].appIds);
+    for (const id of selectedUnassignedAppIds) {
+      if (!currentSet.has(id)) {
+        updated[idx].appIds.push(id);
+        currentSet.add(id);
+      }
+    }
+    setTempSections(updated);
+    setSelectedUnassignedAppIds([]);
+    setBulkTargetSection('');
+  };
+
+  // Quitar una app de una sección (vuelve automáticamente a "Otras Aplicaciones")
+  const handleUnassignApp = (secIndex, appIndex) => {
+    const updated = [...tempSections];
+    const sec = updated[secIndex];
+    const [removedId] = sec.appIds.splice(appIndex, 1);
+    setTempSections(updated);
+    setSelectedSectionAppIds(prev => ({
+      ...prev,
+      [sec.id]: (prev[sec.id] || []).filter(id => id !== removedId)
+    }));
   };
 
   // Guardar configuración personalizada en base de datos
@@ -412,11 +564,11 @@ export const Dashboard = () => {
         isOpen={isCustomizeModalOpen}
         onClose={() => setIsCustomizeModalOpen(false)}
         title="Personalizar Distribución de tu Tablero"
-        maxWidth="740px"
+        maxWidth="780px"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Crea grupos bajo tus propios titulares, reordena los enlaces y organízalos a tu gusto. Esta distribución se guardará en tu cuenta y estará sincronizada en todos tus dispositivos.
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.35 }}>
+            Organiza tus accesos en secciones personalizadas o marca varias casillas para mover aplicaciones en bloque.
           </p>
 
           {/* Formulario para agregar nueva sección */}
@@ -435,169 +587,613 @@ export const Dashboard = () => {
             </Button>
           </div>
 
-          {/* Lista de Secciones Configuradas */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', maxHeight: '440px', overflowY: 'auto', paddingRight: '4px' }}>
-            {tempSections.map((sec, secIdx) => (
-              <div
-                key={sec.id}
-                style={{
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)',
-                  padding: '14px',
-                  background: 'var(--surface-hover)'
-                }}
-              >
-                {/* Header de la Sección */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', gap: '8px' }}>
-                  <input
-                    type="text"
-                    value={sec.titulo}
-                    onChange={(e) => {
-                      const updated = [...tempSections];
-                      updated[secIdx].titulo = e.target.value;
-                      setTempSections(updated);
-                    }}
+          {/* Ayuda orientativa si aún no tiene secciones creadas */}
+          {tempSections.length === 0 && (
+            <div style={{ padding: '8px 12px', background: 'rgba(13, 44, 92, 0.05)', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              💡 <strong>Configura tu primera sección:</strong> Escribe un nombre arriba (ej: <em>Favoritos</em>, <em>Sistemas</em>) y pulsa en <strong>Crear Sección</strong>. Luego podrás marcar casillas para mover aplicaciones masivamente.
+            </div>
+          )}
+
+          {/* Lista de Secciones Configuradas y Bloque de Otras Aplicaciones */}
+          {(() => {
+            const assignedAppIds = new Set(tempSections.flatMap(s => s.appIds));
+            const unassignedApps = apps.filter(a => !assignedAppIds.has(a.id));
+            const filteredUnassignedApps = unassignedApps.filter(app => {
+              if (!unassignedFilter.trim()) return true;
+              const q = unassignedFilter.toLowerCase().trim();
+              return (
+                app.nombre?.toLowerCase().includes(q) ||
+                (app.categoria && app.categoria.toLowerCase().includes(q))
+              );
+            });
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {/* Bloque: Otras Aplicaciones (Sin Agrupar) */}
+                {unassignedApps.length > 0 && (
+                  <div
                     style={{
-                      fontSize: '0.98rem',
-                      fontWeight: 800,
-                      background: 'transparent',
-                      border: 'none',
-                      borderBottom: '1px dashed var(--text-muted)',
-                      color: 'var(--text)',
-                      outline: 'none',
-                      padding: '2px 4px',
-                      flex: 1,
-                      minWidth: '120px'
+                      border: '2px dashed var(--border)',
+                      borderRadius: 'var(--radius)',
+                      padding: '12px',
+                      background: 'var(--surface-hover)'
                     }}
-                  />
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text)', margin: 0 }}>
+                          Otras Aplicaciones (Sin Agrupar)
+                        </h3>
+                        <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>
+                          {unassignedApps.length} {unassignedApps.length === 1 ? 'app' : 'apps'}
+                        </span>
+                      </div>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon={Trash2}
-                    onClick={() => handleDeleteSection(sec.id)}
-                    title="Eliminar Sección"
-                  />
-                </div>
+                      {tempSections.length > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Mover todas ({unassignedApps.length}) a:</span>
+                          <select
+                            value=""
+                            onChange={(e) => {
+                              if (e.target.value !== '') {
+                                handleAssignAllToSection(parseInt(e.target.value, 10), unassignedApps.map(a => a.id));
+                              }
+                            }}
+                            style={{
+                              fontSize: '0.72rem',
+                              padding: '4px 6px',
+                              borderRadius: '6px',
+                              border: '1px solid var(--border)',
+                              background: 'var(--surface)',
+                              color: 'var(--text)',
+                              fontWeight: 600
+                            }}
+                          >
+                            <option value="">Seleccionar sección...</option>
+                            {tempSections.map((s, idx) => (
+                              <option key={s.id} value={idx}>{s.titulo}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
 
-                {/* Lista de Apps en esta sección */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {sec.appIds.map((appId, appIdx) => {
-                    const app = appsById.get(appId);
-                    if (!app) return null;
+                    {/* Barra de Filtro y Checkbox Seleccionar Todo */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                      {filteredUnassignedApps.length > 0 && (
+                        <label
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            color: filteredUnassignedApps.every(a => selectedUnassignedAppIds.includes(a.id)) ? 'var(--primary)' : 'var(--text-muted)',
+                            userSelect: 'none'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={filteredUnassignedApps.length > 0 && filteredUnassignedApps.every(a => selectedUnassignedAppIds.includes(a.id))}
+                            onChange={() => handleToggleSelectAllUnassigned(filteredUnassignedApps.map(a => a.id))}
+                            style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                          />
+                          <span>
+                            {filteredUnassignedApps.every(a => selectedUnassignedAppIds.includes(a.id))
+                              ? 'Deseleccionar todas'
+                              : `Seleccionar todas (${filteredUnassignedApps.length})`}
+                          </span>
+                        </label>
+                      )}
 
-                    return (
+                      {unassignedApps.length > 5 && (
+                        <div style={{ flex: 1, minWidth: '140px', maxWidth: '240px' }}>
+                          <input
+                            type="text"
+                            placeholder="Buscar en apps sin agrupar..."
+                            value={unassignedFilter}
+                            onChange={(e) => setUnassignedFilter(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '4px 8px',
+                              fontSize: '0.75rem',
+                              borderRadius: '6px',
+                              border: '1px solid var(--border)',
+                              background: 'var(--surface)',
+                              color: 'var(--text)'
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* BARRA DE ACCIÓN MASIVA: Sticky y compacta */}
+                    {selectedUnassignedAppIds.length > 0 && (
                       <div
-                        key={appId}
-                        className="customize-app-row"
+                        className="customize-bulk-bar-mobile"
                         style={{
+                          position: 'sticky',
+                          top: 0,
+                          zIndex: 10,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '8px 10px',
+                          gap: '8px',
+                          padding: '6px 12px',
                           background: 'var(--surface)',
+                          border: '1.5px solid var(--primary)',
                           borderRadius: '8px',
-                          border: '1px solid var(--border)',
-                          gap: '8px'
+                          boxShadow: '0 4px 12px rgba(13, 44, 92, 0.12)',
+                          marginBottom: '8px'
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
-                          <span style={{ fontWeight: 600, fontSize: '0.84rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {app.nombre}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary)' }}>
+                            {selectedUnassignedAppIds.length} {selectedUnassignedAppIds.length === 1 ? 'app seleccionada' : 'apps seleccionadas'}
                           </span>
-                          <span className="badge badge-primary" style={{ fontSize: '0.65rem', flexShrink: 0 }}>
-                            {app.categoria || 'General'}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedUnassignedAppIds([])}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--text-muted)',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              textDecoration: 'underline'
+                            }}
+                          >
+                            Limpiar
+                          </button>
+                        </div>
+
+                        {tempSections.length > 0 ? (
+                          <div className="bulk-actions-group" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text)', fontWeight: 600 }}>
+                              Mover a:
+                            </span>
+                            <select
+                              value={bulkTargetSection}
+                              onChange={(e) => setBulkTargetSection(e.target.value)}
+                              style={{
+                                fontSize: '0.78rem',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border)',
+                                background: 'var(--surface)',
+                                color: 'var(--text)',
+                                fontWeight: 600,
+                                minWidth: '130px'
+                              }}
+                            >
+                              <option value="">Elegir sección destino...</option>
+                              {tempSections.map((s, idx) => (
+                                <option key={s.id} value={idx}>{s.titulo}</option>
+                              ))}
+                            </select>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              disabled={bulkTargetSection === ''}
+                              onClick={() => handleApplyBulkMoveUnassigned(bulkTargetSection)}
+                              style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                            >
+                              Mover Selección
+                            </Button>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                            Crea una sección arriba para mover las seleccionadas
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Lista con scroll de aplicaciones no agrupadas: Altura generosa y dinámica */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                        maxHeight: 'clamp(280px, 48vh, 500px)',
+                        overflowY: 'auto',
+                        paddingRight: '4px'
+                      }}
+                    >
+                      {filteredUnassignedApps.map((app) => {
+                        const isSelected = selectedUnassignedAppIds.includes(app.id);
+                        return (
+                          <div
+                            key={app.id}
+                            className="customize-app-row"
+                            onClick={() => handleToggleSelectUnassigned(app.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '6px 10px',
+                              background: isSelected ? 'rgba(13, 44, 92, 0.08)' : 'var(--surface)',
+                              borderRadius: '8px',
+                              border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border)',
+                              gap: '6px',
+                              cursor: 'pointer',
+                              userSelect: 'none',
+                              transition: 'background-color 0.15s, border-color 0.15s'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}} // Se procesa en onClick del contenedor
+                                style={{ cursor: 'pointer', width: '16px', height: '16px', flexShrink: 0 }}
+                              />
+                              <span style={{ fontWeight: isSelected ? 700 : 500, fontSize: '0.82rem', color: isSelected ? 'var(--primary)' : 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {app.nombre}
+                              </span>
+                              <span className="badge badge-primary" style={{ fontSize: '0.62rem', flexShrink: 0, padding: '2px 6px' }}>
+                                {app.categoria || 'General'}
+                              </span>
+                            </div>
+
+                            <div className="customize-app-controls" onClick={(e) => e.stopPropagation()}>
+                              {tempSections.length > 0 ? (
+                                <select
+                                  value=""
+                                  onChange={(e) => {
+                                    if (e.target.value !== '') {
+                                      handleAssignAppToSection(app.id, parseInt(e.target.value, 10));
+                                    }
+                                  }}
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    padding: '3px 6px',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border)',
+                                    background: 'var(--surface)',
+                                    color: 'var(--text-muted)',
+                                    fontWeight: 500,
+                                    cursor: 'pointer'
+                                  }}
+                                  title="Mover sólo esta app"
+                                >
+                                  <option value="">Mover a...</option>
+                                  {tempSections.map((s, idx) => (
+                                    <option key={s.id} value={idx}>{s.titulo}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                  Crea una sección arriba
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {filteredUnassignedApps.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          No hay aplicaciones que coincidan con "{unassignedFilter}".
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Secciones del Usuario */}
+                {tempSections.map((sec, secIdx) => {
+                  const secSelected = selectedSectionAppIds[sec.id] || [];
+                  const allSecSelected = sec.appIds.length > 0 && secSelected.length === sec.appIds.length;
+
+                  return (
+                    <div
+                      key={sec.id}
+                      style={{
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius)',
+                        padding: '14px',
+                        background: 'var(--surface-hover)'
+                      }}
+                    >
+                      {/* Header de la Sección */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', gap: '8px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '180px' }}>
+                          <input
+                            type="text"
+                            value={sec.titulo}
+                            onChange={(e) => {
+                              const updated = [...tempSections];
+                              updated[secIdx].titulo = e.target.value;
+                              setTempSections(updated);
+                            }}
+                            style={{
+                              fontSize: '0.98rem',
+                              fontWeight: 800,
+                              background: 'transparent',
+                              border: 'none',
+                              borderBottom: '1px dashed var(--text-muted)',
+                              color: 'var(--text)',
+                              outline: 'none',
+                              padding: '2px 4px',
+                              flex: 1
+                            }}
+                          />
+                          <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>
+                            {sec.appIds.length} {sec.appIds.length === 1 ? 'app' : 'apps'}
                           </span>
                         </div>
 
-                        <div className="customize-app-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {/* Subir */}
-                          <button
-                            type="button"
-                            disabled={appIdx === 0}
-                            onClick={() => handleMoveApp(secIdx, appIdx, 'up')}
-                            style={{
-                              width: '32px',
-                              height: '32px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: '6px',
-                              border: '1px solid var(--border)',
-                              background: 'var(--surface-hover)',
-                              cursor: appIdx === 0 ? 'not-allowed' : 'pointer',
-                              opacity: appIdx === 0 ? 0.3 : 1,
-                              color: 'var(--text)'
-                            }}
-                            title="Subir"
-                          >
-                            <ArrowUp size={15} />
-                          </button>
-
-                          {/* Bajar */}
-                          <button
-                            type="button"
-                            disabled={appIdx === sec.appIds.length - 1}
-                            onClick={() => handleMoveApp(secIdx, appIdx, 'down')}
-                            style={{
-                              width: '32px',
-                              height: '32px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: '6px',
-                              border: '1px solid var(--border)',
-                              background: 'var(--surface-hover)',
-                              cursor: appIdx === sec.appIds.length - 1 ? 'not-allowed' : 'pointer',
-                              opacity: appIdx === sec.appIds.length - 1 ? 0.3 : 1,
-                              color: 'var(--text)'
-                            }}
-                            title="Bajar"
-                          >
-                            <ArrowDown size={15} />
-                          </button>
-
-                          {/* Selector para mover a otra sección si hay más de 1 */}
-                          {tempSections.length > 1 && (
-                            <select
-                              value=""
-                              onChange={(e) => {
-                                if (e.target.value !== '') {
-                                  handleMoveAppToSection(secIdx, appIdx, parseInt(e.target.value, 10));
-                                }
-                              }}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {sec.appIds.length > 0 && (
+                            <label
                               style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                cursor: 'pointer',
                                 fontSize: '0.75rem',
-                                padding: '6px 8px',
-                                borderRadius: '6px',
-                                border: '1px solid var(--border)',
-                                background: 'var(--surface-hover)',
-                                color: 'var(--text)',
-                                maxWidth: '130px'
+                                color: allSecSelected ? 'var(--primary)' : 'var(--text-muted)',
+                                fontWeight: 600,
+                                userSelect: 'none'
                               }}
                             >
-                              <option value="">Mover a...</option>
+                              <input
+                                type="checkbox"
+                                checked={allSecSelected}
+                                onChange={() => handleToggleSelectAllInSection(sec.id, sec.appIds)}
+                                style={{ cursor: 'pointer', width: '14px', height: '14px' }}
+                              />
+                              <span>{allSecSelected ? 'Deseleccionar' : 'Seleccionar todo'}</span>
+                            </label>
+                          )}
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={Trash2}
+                            onClick={() => handleDeleteSection(sec.id)}
+                            title="Eliminar Sección"
+                          />
+                        </div>
+                      </div>
+
+                      {/* BARRA DE ACCIÓN MASIVA DE LA SECCIÓN */}
+                      {secSelected.length > 0 && (
+                        <div
+                          className="customize-bulk-bar-mobile"
+                          style={{
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 10,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '8px',
+                            padding: '6px 12px',
+                            background: 'var(--surface)',
+                            border: '1.5px solid var(--primary)',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(13, 44, 92, 0.12)',
+                            marginBottom: '8px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary)' }}>
+                              {secSelected.length} {secSelected.length === 1 ? 'app seleccionada' : 'apps seleccionadas'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedSectionAppIds(prev => ({ ...prev, [sec.id]: [] }))}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-muted)',
+                                fontSize: '0.72rem',
+                                cursor: 'pointer',
+                                textDecoration: 'underline'
+                              }}
+                            >
+                              Limpiar
+                            </button>
+                          </div>
+
+                          <div className="bulk-actions-group" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text)', fontWeight: 600 }}>
+                              Mover a:
+                            </span>
+                            <select
+                              value={sectionBulkTargets[sec.id] || ''}
+                              onChange={(e) => setSectionBulkTargets(prev => ({ ...prev, [sec.id]: e.target.value }))}
+                              style={{
+                                fontSize: '0.78rem',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border)',
+                                background: 'var(--surface)',
+                                color: 'var(--text)',
+                                fontWeight: 600,
+                                minWidth: '130px'
+                              }}
+                            >
+                              <option value="">Elegir destino...</option>
                               {tempSections.map((s, idx) => (
                                 idx !== secIdx ? <option key={s.id} value={idx}>{s.titulo}</option> : null
                               ))}
+                              <option value="__unassign__">Desagrupar (Enviar a Otras)</option>
                             </select>
-                          )}
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              disabled={!sectionBulkTargets[sec.id]}
+                              onClick={() => handleBulkMoveFromSection(secIdx, sectionBulkTargets[sec.id])}
+                              style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                            >
+                              Mover Selección
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                  {sec.appIds.length === 0 && (
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                      Esta sección no tiene aplicaciones.
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+                      )}
 
-          {/* Footer del Modal */}
-          <div className="customize-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '16px', gap: '12px' }}>
+                      {/* Lista de Apps en esta sección */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px',
+                          maxHeight: sec.appIds.length > 7 ? 'clamp(200px, 36vh, 360px)' : 'none',
+                          overflowY: sec.appIds.length > 7 ? 'auto' : 'visible',
+                          paddingRight: sec.appIds.length > 7 ? '4px' : '0'
+                        }}
+                      >
+                        {sec.appIds.map((appId, appIdx) => {
+                          const app = appsById.get(appId);
+                          if (!app) return null;
+                          const isSelected = secSelected.includes(appId);
+
+                          return (
+                            <div
+                              key={appId}
+                              className="customize-app-row"
+                              onClick={() => handleToggleSelectInSection(sec.id, appId)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '6px 10px',
+                                background: isSelected ? 'rgba(13, 44, 92, 0.08)' : 'var(--surface)',
+                                borderRadius: '8px',
+                                border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border)',
+                                gap: '6px',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                transition: 'background-color 0.15s, border-color 0.15s'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => {}} // gestionado en el onClick del contenedor
+                                  style={{ cursor: 'pointer', width: '16px', height: '16px', flexShrink: 0 }}
+                                />
+                                <span style={{ fontWeight: isSelected ? 700 : 500, fontSize: '0.82rem', color: isSelected ? 'var(--primary)' : 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {app.nombre}
+                                </span>
+                                <span className="badge badge-primary" style={{ fontSize: '0.62rem', flexShrink: 0, padding: '2px 6px' }}>
+                                  {app.categoria || 'General'}
+                                </span>
+                              </div>
+
+                              <div className="customize-app-controls" style={{ display: 'flex', alignItems: 'center', gap: '4px' }} onClick={(e) => e.stopPropagation()}>
+                                {/* Subir */}
+                                <button
+                                  type="button"
+                                  disabled={appIdx === 0}
+                                  onClick={() => handleMoveApp(secIdx, appIdx, 'up')}
+                                  style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border)',
+                                    background: 'var(--surface-hover)',
+                                    cursor: appIdx === 0 ? 'not-allowed' : 'pointer',
+                                    opacity: appIdx === 0 ? 0.3 : 1,
+                                    color: 'var(--text)'
+                                  }}
+                                  title="Subir"
+                                >
+                                  <ArrowUp size={13} />
+                                </button>
+
+                                {/* Bajar */}
+                                <button
+                                  type="button"
+                                  disabled={appIdx === sec.appIds.length - 1}
+                                  onClick={() => handleMoveApp(secIdx, appIdx, 'down')}
+                                  style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border)',
+                                    background: 'var(--surface-hover)',
+                                    cursor: appIdx === sec.appIds.length - 1 ? 'not-allowed' : 'pointer',
+                                    opacity: appIdx === sec.appIds.length - 1 ? 0.3 : 1,
+                                    color: 'var(--text)'
+                                  }}
+                                  title="Bajar"
+                                >
+                                  <ArrowDown size={13} />
+                                </button>
+
+                                {/* Selector individual para mover a otra sección o desagrupar */}
+                                <select
+                                  value=""
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === '__unassign__') {
+                                      handleUnassignApp(secIdx, appIdx);
+                                    } else if (val !== '') {
+                                      handleMoveAppToSection(secIdx, appIdx, parseInt(val, 10));
+                                    }
+                                  }}
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    padding: '3px 6px',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border)',
+                                    background: 'var(--surface-hover)',
+                                    color: 'var(--text)',
+                                    maxWidth: '110px'
+                                  }}
+                                >
+                                  <option value="">Mover a...</option>
+                                  {tempSections.map((s, idx) => (
+                                    idx !== secIdx ? <option key={s.id} value={idx}>{s.titulo}</option> : null
+                                  ))}
+                                  <option value="__unassign__">Desagrupar (Otras)</option>
+                                </select>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {sec.appIds.length === 0 && (
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '6px 0' }}>
+                            Esta sección no tiene aplicaciones aún. Marca aplicaciones en Otras o arriba y muévelas aquí.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* Footer del Modal: Sticky al fondo para conveniencia */}
+          <div
+            className="customize-footer"
+            style={{
+              position: 'sticky',
+              bottom: '-24px',
+              background: 'var(--surface)',
+              borderTop: '1px solid var(--border)',
+              paddingTop: '12px',
+              paddingBottom: '4px',
+              marginTop: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              zIndex: 30
+            }}
+          >
             <Button
               variant="ghost"
               size="sm"

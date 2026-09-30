@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as Icons from 'lucide-react';
-import { ExternalLink, ShieldCheck, Tag, Wifi, Lock, Send, Check } from 'lucide-react';
+import { ExternalLink, ShieldCheck, Tag, Wifi, Lock, Send, Check, Calendar } from 'lucide-react';
 import { StatsService } from '../services/api';
 
 export const AppCard = ({ app, onRequestAccess }) => {
@@ -9,8 +9,24 @@ export const AppCard = ({ app, onRequestAccess }) => {
   const [opening, setOpening] = useState(false);
 
   // Determinar si puede acceder o sólo ver
-  // Determinar si puede acceder o sólo ver
   const canAccess = app.puede_acceder !== false && app.puede_acceder !== 0;
+
+  // Formatear fecha de última actualización para el badge desktop
+  const formatUpdateDate = (dateVal) => {
+    if (!dateVal) return null;
+    try {
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return null;
+      return d.toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (_) {
+      return null;
+    }
+  };
+  const updatedDateStr = formatUpdateDate(app.updated_at);
 
   // Normalizar color de la app para asegurar contenedor estilizado
   const getAppColor = () => {
@@ -122,6 +138,26 @@ export const AppCard = ({ app, onRequestAccess }) => {
                 <Tag size={11} />
                 {app.categoria || 'General'}
               </span>
+              {updatedDateStr ? (
+                <span
+                  title={`Última actualización: ${updatedDateStr}`}
+                  style={{
+                    fontSize: '0.65rem',
+                    color: 'var(--text-muted)',
+                    background: 'var(--surface-hover)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-pill)',
+                    padding: '1.5px 7px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontWeight: 500
+                  }}
+                >
+                  <Calendar size={10} style={{ opacity: 0.75 }} />
+                  <span>Act: {updatedDateStr}</span>
+                </span>
+              ) : null}
               {app.origen_asignacion && app.origen_asignacion !== 'Directa' && app.origen_asignacion !== 'Pública' ? (
                 <span
                   style={{

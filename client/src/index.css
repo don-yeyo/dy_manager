@@ -588,30 +588,61 @@ body {
     width: 100% !important;
   }
   .customize-app-row {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 8px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 6px 8px !important;
+    gap: 6px !important;
+    min-height: 38px !important;
   }
   .customize-app-controls {
     display: flex !important;
+    align-items: center !important;
     justify-content: flex-end !important;
-    width: 100% !important;
-    gap: 6px !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
   }
   .customize-app-controls select {
+    font-size: 0.72rem !important;
+    padding: 3px 5px !important;
+    max-width: 90px !important;
+    border-radius: 4px !important;
+  }
+  .customize-app-controls button {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+  }
+  .customize-bulk-bar-mobile {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    padding: 8px 10px !important;
+  }
+  .customize-bulk-bar-mobile .bulk-actions-group {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  .customize-bulk-bar-mobile select {
     flex: 1 !important;
-    max-width: none !important;
+    min-width: 0 !important;
+  }
+  .customize-bulk-bar-mobile button {
+    flex-shrink: 0 !important;
   }
   .customize-footer {
     flex-direction: column-reverse !important;
     align-items: stretch !important;
-    gap: 12px !important;
+    gap: 8px !important;
+    padding-top: 10px !important;
   }
   .customize-footer-actions {
     width: 100% !important;
     display: flex !important;
     flex-direction: column-reverse !important;
-    gap: 8px !important;
+    gap: 6px !important;
   }
   .customize-footer-actions button {
     width: 100% !important;

@@ -177,10 +177,8 @@ export const AdminUsersGroups = () => {
   const handleSaveGroupDetails = async () => {
     try {
       setSubmitting(true);
-      await Promise.all([
-        GroupsService.saveMembers(selectedGroup.id, groupMemberIds),
-        GroupsService.saveApps(selectedGroup.id, groupAppIds)
-      ]);
+      await GroupsService.saveMembers(selectedGroup.id, groupMemberIds);
+      await GroupsService.saveApps(selectedGroup.id, groupAppIds);
       setIsGroupMembersModalOpen(false);
       fetchData();
     } catch (err) {
@@ -557,16 +555,68 @@ export const AdminUsersGroups = () => {
         isOpen={isGroupMembersModalOpen}
         onClose={() => setIsGroupMembersModalOpen(false)}
         title={`Configurar Grupo: ${selectedGroup?.nombre || ''}`}
-        maxWidth="640px"
+        maxWidth="680px"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Bloque: Miembros del Grupo */}
           <div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '6px' }}>Miembros del Grupo</h4>
-            <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h4 style={{ fontSize: '0.92rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
+                  Miembros del Grupo
+                </h4>
+                <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>
+                  {groupMemberIds.length} de {users.length}
+                </span>
+              </div>
+
+              {users.length > 0 && (
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: users.every(u => groupMemberIds.includes(u.id)) ? 'var(--primary)' : 'var(--text-muted)',
+                    userSelect: 'none'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={users.length > 0 && users.every(u => groupMemberIds.includes(u.id))}
+                    onChange={(e) => {
+                      if (e.target.checked) setGroupMemberIds(users.map(u => u.id));
+                      else setGroupMemberIds([]);
+                    }}
+                    style={{ cursor: 'pointer', width: '15px', height: '15px' }}
+                  />
+                  <span>
+                    {users.every(u => groupMemberIds.includes(u.id)) ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            <div style={{ maxHeight: '145px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 8px', background: 'var(--surface-hover)' }}>
               {users.map((u) => {
                 const isMember = groupMemberIds.includes(u.id);
                 return (
-                  <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px', cursor: 'pointer' }}>
+                  <label
+                    key={u.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      background: isMember ? 'rgba(13, 44, 92, 0.06)' : 'transparent',
+                      marginBottom: '2px',
+                      transition: 'background-color 0.15s'
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={isMember}
@@ -574,37 +624,123 @@ export const AdminUsersGroups = () => {
                         if (e.target.checked) setGroupMemberIds([...groupMemberIds, u.id]);
                         else setGroupMemberIds(groupMemberIds.filter(id => id !== u.id));
                       }}
+                      style={{ cursor: 'pointer' }}
                     />
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{u.nombre} ({u.email})</span>
+                    <span style={{ fontSize: '0.84rem', fontWeight: isMember ? 700 : 500, color: 'var(--text)' }}>
+                      {u.nombre} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({u.email})</span>
+                    </span>
                   </label>
                 );
               })}
+              {users.length === 0 && (
+                <div style={{ padding: '8px', fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  No hay usuarios disponibles.
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Bloque: Aplicaciones Asignadas al Grupo */}
           <div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '6px' }}>Aplicaciones Asignadas al Grupo</h4>
-            <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h4 style={{ fontSize: '0.92rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
+                  Aplicaciones Asignadas al Grupo
+                </h4>
+                <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>
+                  {groupAppIds.length} de {apps.length}
+                </span>
+              </div>
+
+              {apps.length > 0 && (
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: apps.every(a => groupAppIds.includes(a.id)) ? 'var(--primary)' : 'var(--text-muted)',
+                    userSelect: 'none'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={apps.length > 0 && apps.every(a => groupAppIds.includes(a.id))}
+                    onChange={(e) => {
+                      if (e.target.checked) setGroupAppIds(apps.map(a => a.id));
+                      else setGroupAppIds([]);
+                    }}
+                    style={{ cursor: 'pointer', width: '15px', height: '15px' }}
+                  />
+                  <span>
+                    {apps.every(a => groupAppIds.includes(a.id)) ? 'Deseleccionar todas' : 'Seleccionar todas'}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            <div style={{ maxHeight: '165px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 8px', background: 'var(--surface-hover)' }}>
               {apps.map((a) => {
                 const hasApp = groupAppIds.includes(a.id);
                 return (
-                  <label key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={hasApp}
-                      onChange={(e) => {
-                        if (e.target.checked) setGroupAppIds([...groupAppIds, a.id]);
-                        else setGroupAppIds(groupAppIds.filter(id => id !== a.id));
-                      }}
-                    />
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{a.nombre}</span>
+                  <label
+                    key={a.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      background: hasApp ? 'rgba(13, 44, 92, 0.06)' : 'transparent',
+                      marginBottom: '2px',
+                      transition: 'background-color 0.15s'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                      <input
+                        type="checkbox"
+                        checked={hasApp}
+                        onChange={(e) => {
+                          if (e.target.checked) setGroupAppIds([...groupAppIds, a.id]);
+                          else setGroupAppIds(groupAppIds.filter(id => id !== a.id));
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize: '0.84rem', fontWeight: hasApp ? 700 : 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {a.nombre}
+                      </span>
+                    </div>
+                    <span className="badge" style={{ fontSize: '0.65rem', background: 'var(--surface)', border: '1px solid var(--border)', flexShrink: 0 }}>
+                      {a.categoria || 'General'}
+                    </span>
                   </label>
                 );
               })}
+              {apps.length === 0 && (
+                <div style={{ padding: '8px', fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  No hay aplicaciones disponibles.
+                </div>
+              )}
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          {/* Footer del Modal: Botones Cancelar y Guardar */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: '12px',
+              paddingTop: '16px',
+              borderTop: '1px solid var(--border)',
+              marginTop: '4px',
+              paddingBottom: '2px'
+            }}
+          >
             <Button variant="outline" onClick={() => setIsGroupMembersModalOpen(false)}>
               Cancelar
             </Button>

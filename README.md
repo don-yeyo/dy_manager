@@ -1,4 +1,4 @@
-# Don Yeyo Manager
+﻿# Don Yeyo Manager
 
 Portal y Hub centralizado para nuclear el acceso a todas las herramientas y sistemas web corporativos de **Don Yeyo S.A.** Permite a los colaboradores acceder a sus aplicaciones de trabajo en un tablero interactivo según sus permisos asignados (individualmente o por pertenencia a grupos), garantizando seguridad, auditoría atómica mediante Triggers de base de datos, estadísticas de uso en tiempo real, soporte PWA y despliegue serverless en **Netlify Functions**.
 
@@ -11,6 +11,7 @@ Portal y Hub centralizado para nuclear el acceso a todas las herramientas y sist
    - **Personalización del Tablero por Usuario:**
      - El usuario puede crear sus propias agrupaciones bajo titulares personalizados (ej. *Mis Favoritos*, *Accesos Diarios*, *Planta & Operaciones*).
      - Permite reordenar los enlaces en la grilla y moverlos entre secciones.
+     - **Gestión de "Otras Aplicaciones":** En el modal de personalización se lista un bloque dedicado con todas las herramientas sin agrupar (como las recién asignadas), permitiendo marcarlas con casilleros individuales o con selector masivo, filtrarlas por nombre/categoría y moverlas a la sección destino en una sola acción masiva.
      - Se persiste en la tabla `usuario_tablero_config` de MySQL, manteniendo la misma configuración desde cualquier dispositivo (smartphone, tablet o PC de escritorio).
    - Buscador interactivo en tiempo real por nombre, descripción o área.
    - Filtros dinámicos por categorías (*Seguridad*, *Logística*, *Producción*, *Administración*, etc.).
@@ -77,6 +78,16 @@ Portal y Hub centralizado para nuclear el acceso a todas las herramientas y sist
     - **Tipos de Permiso:** Cada asignación a usuario o grupo define si la persona **"Puede acceder"** (ingreso directo) o **"Sólo puede ver"**.
     - **Solicitud de Acceso por Email (SMTP):** Al pulsar sobre una aplicación en modo *Sólo ver*, se abre un modal de solicitud que remite un correo corporativo formateado (idéntico al motor SMTP de `dy_firma_remitos`) a los administradores definidos en `EMAIL_DESTINATARIOS_SOLICITUDES`.
 
+13. **Badge Sutil de Fecha de Actualización (Desktop):**
+    - En la vista de escritorio del tablero (`app-card-desktop`), cada tarjeta muestra un badge sobrio y minimalista (`Act: DD/MM/AAAA`) junto a su categoría con icono de calendario.
+    - Se alimenta del campo `updated_at` de la aplicación, permitiendo identificar rápidamente cuándo fue relevada o modificada una herramienta.
+    - Se mantiene oculto en la vista mobile para preservar la ligereza visual de la botonera smartphone.
+
+14. **Optimización de Asignaciones Masivas (Bulk Insert):**
+    - Las asignaciones de múltiples miembros o aplicaciones a grupos y usuarios (`/api/groups/:id/members`, `/api/groups/:id/apps`, `/api/apps/:id/assignments`) utilizan sentencias `INSERT ... VALUES ?` por lote (Bulk Insert).
+    - Reduce decenas de peticiones secuenciales a una sola consulta atómica, eliminando latencias acumuladas hacia bases de datos remotas en la nube (AWS RDS).
+    - Timeout configurable en cliente mediante `VITE_API_TIMEOUT` (45 segundos por defecto).
+
 ---
 
 ## 🏛️ Arquitectura y Despliegue en Netlify
@@ -89,6 +100,7 @@ DonYeyoMannager/
 ├── package.json               # Versión de la herramienta y scripts generales
 ├── .env.template              # Plantilla de variables de entorno global
 ├── .gitignore                 # Reglas limpias de exclusión para Git
+├── docs/                      # Documentación y relevamientos (ej. CSV de aplicaciones)
 ├── client/                    # Frontend React 19 + Vite 6 + PWA
 │   ├── package.json           # Dependencias cliente autónomas
 │   ├── vite.config.js         # Configuración Vite, PWA y define __APP_VERSION__
@@ -111,6 +123,8 @@ DonYeyoMannager/
     ├── config/
     │   └── db.js              # Pool MySQL y executeWithUser para triggers
     ├── middlewares/           # authMiddleware.js, roleGuard.js
+    ├── scripts/
+    │   └── import_apps_csv.js # Script para importar aplicaciones masivas desde CSV y asignarlas a grupos
     ├── utils/                 # urlValidator.js
     └── routes/                # auth.js, apps.js, users.js, groups.js, stats.js, audit.js, userConfig.js
 ```
@@ -162,3 +176,4 @@ npm install   # (solo la primera vez)
 npm run dev
 ```
 Abrirá el portal PWA en `http://localhost:5173`.
+

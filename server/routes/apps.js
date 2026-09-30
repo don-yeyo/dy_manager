@@ -26,7 +26,7 @@ router.get('/my-apps', authMiddleware, async (req, res) => {
     if (showAll) {
       query = `
         SELECT a.id, a.nombre, a.descripcion, a.url, a.icono, a.categoria, a.color, a.orden,
-               a.requiere_seguridad,
+               a.requiere_seguridad, a.updated_at,
                1 as puede_acceder,
                'acceso' as tipo_permiso,
                'ADMIN_OVERRIDE' as origen_asignacion
@@ -39,7 +39,7 @@ router.get('/my-apps', authMiddleware, async (req, res) => {
       query = `
         SELECT 
           a.id, a.nombre, a.descripcion, a.url, a.icono, a.categoria, a.color, a.orden,
-          a.requiere_seguridad,
+          a.requiere_seguridad, a.updated_at,
           CASE 
             WHEN a.requiere_seguridad = 0 THEN 1
             WHEN ${isAdmin ? '1=1' : '1=0'} THEN 1
@@ -270,47 +270,55 @@ router.post('/:id/assignments', authMiddleware, requireAdmin, async (req, res) =
       // 1. Asignaciones de usuarios
       await conn.query('DELETE FROM asignaciones_usuarios WHERE aplicacion_id = ?', [appId]);
 
-      if (Array.isArray(userAssignments)) {
+      const userValues = [];
+      if (Array.isArray(userAssignments) && userAssignments.length > 0) {
         for (const item of userAssignments) {
           const uid = typeof item === 'object' ? item.id : item;
           const tipo = (typeof item === 'object' && item.tipo_permiso === 'solo_ver') ? 'solo_ver' : 'acceso';
           if (uid) {
-            await conn.query(
-              'INSERT INTO asignaciones_usuarios (usuario_id, aplicacion_id, asignado_por, tipo_permiso) VALUES (?, ?, ?, ?)',
-              [uid, appId, req.user.email, tipo]
-            );
+            userValues.push([uid, appId, req.user.email, tipo]);
           }
         }
-      } else if (Array.isArray(userIds)) {
+      } else if (Array.isArray(userIds) && userIds.length > 0) {
         for (const uid of userIds) {
-          await conn.query(
-            'INSERT INTO asignaciones_usuarios (usuario_id, aplicacion_id, asignado_por, tipo_permiso) VALUES (?, ?, ?, ?)',
-            [uid, appId, req.user.email, 'acceso']
-          );
+          if (uid) {
+            userValues.push([uid, appId, req.user.email, 'acceso']);
+          }
         }
+      }
+
+      if (userValues.length > 0) {
+        await conn.query(
+          'INSERT INTO asignaciones_usuarios (usuario_id, aplicacion_id, asignado_por, tipo_permiso) VALUES ?',
+          [userValues]
+        );
       }
 
       // 2. Asignaciones de grupos
       await conn.query('DELETE FROM asignaciones_grupos WHERE aplicacion_id = ?', [appId]);
 
-      if (Array.isArray(groupAssignments)) {
+      const groupValues = [];
+      if (Array.isArray(groupAssignments) && groupAssignments.length > 0) {
         for (const item of groupAssignments) {
           const gid = typeof item === 'object' ? item.id : item;
           const tipo = (typeof item === 'object' && item.tipo_permiso === 'solo_ver') ? 'solo_ver' : 'acceso';
           if (gid) {
-            await conn.query(
-              'INSERT INTO asignaciones_grupos (grupo_id, aplicacion_id, asignado_por, tipo_permiso) VALUES (?, ?, ?, ?)',
-              [gid, appId, req.user.email, tipo]
-            );
+            groupValues.push([gid, appId, req.user.email, tipo]);
           }
         }
-      } else if (Array.isArray(groupIds)) {
+      } else if (Array.isArray(groupIds) && groupIds.length > 0) {
         for (const gid of groupIds) {
-          await conn.query(
-            'INSERT INTO asignaciones_grupos (grupo_id, aplicacion_id, asignado_por, tipo_permiso) VALUES (?, ?, ?, ?)',
-            [gid, appId, req.user.email, 'acceso']
-          );
+          if (gid) {
+            groupValues.push([gid, appId, req.user.email, 'acceso']);
+          }
         }
+      }
+
+      if (groupValues.length > 0) {
+        await conn.query(
+          'INSERT INTO asignaciones_grupos (grupo_id, aplicacion_id, asignado_por, tipo_permiso) VALUES ?',
+          [groupValues]
+        );
       }
     });
 

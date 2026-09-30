@@ -59,13 +59,9 @@ router.post('/', authMiddleware, requireAdmin, async (req, res) => {
       );
       const newUserId = res.insertId;
 
-      if (Array.isArray(groupIds)) {
-        for (const gid of groupIds) {
-          await conn.query(
-            'INSERT INTO usuarios_grupos (usuario_id, grupo_id) VALUES (?, ?)',
-            [newUserId, gid]
-          );
-        }
+      if (Array.isArray(groupIds) && groupIds.length > 0) {
+        const values = groupIds.map(gid => [newUserId, gid]);
+        await conn.query('INSERT INTO usuarios_grupos (usuario_id, grupo_id) VALUES ?', [values]);
       }
 
       return res;
@@ -183,24 +179,28 @@ router.post('/:id/apps', authMiddleware, requireAdmin, async (req, res) => {
     await executeWithUser(req.user.email, async (conn) => {
       await conn.query('DELETE FROM asignaciones_usuarios WHERE usuario_id = ?', [userId]);
 
-      if (Array.isArray(appAssignments)) {
+      const values = [];
+      if (Array.isArray(appAssignments) && appAssignments.length > 0) {
         for (const item of appAssignments) {
           const appId = typeof item === 'object' ? item.id : item;
           const tipo = (typeof item === 'object' && item.tipo_permiso === 'solo_ver') ? 'solo_ver' : 'acceso';
           if (appId) {
-            await conn.query(
-              'INSERT INTO asignaciones_usuarios (usuario_id, aplicacion_id, asignado_por, tipo_permiso) VALUES (?, ?, ?, ?)',
-              [userId, appId, req.user.email, tipo]
-            );
+            values.push([userId, appId, req.user.email, tipo]);
           }
         }
-      } else if (Array.isArray(appIds)) {
+      } else if (Array.isArray(appIds) && appIds.length > 0) {
         for (const appId of appIds) {
-          await conn.query(
-            'INSERT INTO asignaciones_usuarios (usuario_id, aplicacion_id, asignado_por, tipo_permiso) VALUES (?, ?, ?, ?)',
-            [userId, appId, req.user.email, 'acceso']
-          );
+          if (appId) {
+            values.push([userId, appId, req.user.email, 'acceso']);
+          }
         }
+      }
+
+      if (values.length > 0) {
+        await conn.query(
+          'INSERT INTO asignaciones_usuarios (usuario_id, aplicacion_id, asignado_por, tipo_permiso) VALUES ?',
+          [values]
+        );
       }
     });
 
